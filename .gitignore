@@ -1,1 +1,13 @@
+# Virtual environment directory
+venv/
+
+# Python cache files
+__pycache__/
+
+# Migration files
+*/migrations/*.py
+!*/migrations/__init__.py 
+
+# Default database file for SQLite
+# This file is used to store the SQLite database for the application.
 /db.sqlite3
