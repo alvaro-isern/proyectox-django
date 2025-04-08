@@ -11,6 +11,12 @@ class Colegiado(models.Model):
 
     class Meta:
         db_table = 'colegiados'
+    
+    def delete_logical(self):
+        """Realiza una eliminación lógica del colegiado."""
+        inactivo, _ = Activo.objects.get_or_create(estado="Inactivo")
+        self.activo = inactivo
+        self.save()
 
 
 class Ingeniero(models.Model):
@@ -28,12 +34,7 @@ class Ingeniero(models.Model):
 
 
 class TipoDocumento(models.Model):
-    DOCUMENT_TYPE_CHOICES = [
-        ('DNI', 'DNI'),
-        ('CARNET DE EXTRANJERIA', 'CARNET DE EXTRANJERIA'),
-        ('PASAPORTE', 'PASAPORTE'),
-    ]
-    tipo = models.CharField(max_length=50, unique=True, choices=DOCUMENT_TYPE_CHOICES)
+    tipo = models.CharField(max_length=50, unique=True)
 
     class Meta:
         db_table = 'tipo_documento'

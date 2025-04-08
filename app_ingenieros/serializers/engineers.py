@@ -1,11 +1,8 @@
 from rest_framework import serializers
 from app_ingenieros.models import Ingeniero
-from app_ingenieros.models import TipoDocumento
 
 class EngineerSerializer(serializers.ModelSerializer):
-
-    tipo_documento_tipo = serializers.ChoiceField(choices=TipoDocumento.DOCUMENT_TYPE_CHOICES, source='tipo_documento.tipo')
-    #pais_nombre = serializers.ChoiceField(source='pais.nombre', read_only=True)
+    
     class Meta:
         model = Ingeniero
         fields = '__all__'
@@ -20,7 +17,7 @@ class EngineerSerializer(serializers.ModelSerializer):
         Validate the data before creating or updating an Ingeniero instance.
         """
         # Example validation: Ensure 'name' is not empty
-        if not data.get('name'):
+        if not data.get('nombres'):
             raise serializers.ValidationError("Name field cannot be empty.")
         
         # Add any other custom validation logic here
@@ -34,3 +31,28 @@ class EngineerSerializer(serializers.ModelSerializer):
         instance = super().create(validated_data)
         # Add any post-creation logic here if needed
         return instance
+    
+    def to_representation(self, instance):
+        """Customize the serialized output."""
+        representation = super().to_representation(instance)
+
+        TipoDocumento = instance.tipo_documento
+        if TipoDocumento:
+            representation['tipo_documento'] = {
+                'id': TipoDocumento.id,
+                'tipo': TipoDocumento.tipo
+            }
+        else:
+            representation['tipo_documento'] = None
+
+        Pais = instance.pais
+        if Pais:
+            representation['pais'] = {
+                'id': Pais.id,
+                'codigo': Pais.codigo,
+                'nombre': Pais.nombre
+            }
+        else:
+            representation['pais'] = None
+
+        return representation
