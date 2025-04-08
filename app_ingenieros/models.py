@@ -28,7 +28,12 @@ class Ingeniero(models.Model):
 
 
 class TipoDocumento(models.Model):
-    tipo = models.CharField(max_length=50, unique=True)
+    DOCUMENT_TYPE_CHOICES = [
+        ('DNI', 'DNI'),
+        ('CARNET DE EXTRANJERIA', 'CARNET DE EXTRANJERIA'),
+        ('PASAPORTE', 'PASAPORTE'),
+    ]
+    tipo = models.CharField(max_length=50, unique=True, choices=DOCUMENT_TYPE_CHOICES)
 
     class Meta:
         db_table = 'tipo_documento'
