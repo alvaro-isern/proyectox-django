@@ -5,22 +5,23 @@ from app_ingenieros.models import (
 )
 
 
-class MembersSerializer(serializers.ModelSerializer): 
+class MembersSerializer(serializers.ModelSerializer):
     nombres = serializers.CharField(source='ingeniero.nombres')
-    apellido_materno = serializers.CharField(source='ingeniero.apellido_materno')
-    apellido_paterno = serializers.CharField(source='ingeniero.apellido_paterno')
-    tipo_documento = serializers.IntegerField(source='ingeniero.tipo_documento.id')
-    numero_documento = serializers.CharField(source='ingeniero.numero_documento')
+    apellido_materno = serializers.CharField(
+        source='ingeniero.apellido_materno')
+    apellido_paterno = serializers.CharField(
+        source='ingeniero.apellido_paterno')
+    tipo_documento = serializers.IntegerField()
+    numero_documento = serializers.CharField(
+        source='ingeniero.numero_documento')
     correo = serializers.EmailField(source='ingeniero.correo')
-    codigo_pais = serializers.IntegerField(source='ingeniero.pais.id')
+    codigo_pais = serializers.IntegerField()
     celular = serializers.CharField(source='ingeniero.celular')
-    estado_activo = serializers.IntegerField(source='activo.id')
-    capitulo = serializers.IntegerField(source='capitulo.id')
-    consejo_departamental = serializers.IntegerField(source='consejo_departamental.id')
-    colegiatura = serializers.IntegerField(source='colegiatura.id')
-    tipo_colegiado = serializers.IntegerField(source='tipo_colegiado.id')
-
-
+    estado_activo = serializers.IntegerField()
+    capitulo = serializers.IntegerField()
+    consejo_departamental = serializers.IntegerField()
+    colegiatura = serializers.IntegerField()
+    tipo_colegiado = serializers.IntegerField()
 
     class Meta:
         model = Colegiado
@@ -34,47 +35,96 @@ class MembersSerializer(serializers.ModelSerializer):
         # read_only_fields = ['documento']
 
     def create(self, validated_data):
-        # Crear o recuperar tipo de documento
-        tipo_documento, _ = TipoDocumento.objects.get(
-            tipo=validated_data.pop('tipo_documento'))
+        # Validar y obtener tipo de documento
+        tipo_documento_id = validated_data.pop('tipo_documento', None)
+        if not tipo_documento_id:
+            raise serializers.ValidationError(
+                {"tipo_documento": "Este campo es obligatorio."}
+            )
+        try:
+            tipo_documento, _ = TipoDocumento.objects.get_or_create(
+                id=tipo_documento_id)
+        except TipoDocumento.DoesNotExist:
+            raise serializers.ValidationError(
+                {"tipo_documento": "Tipo de documento no válido."}
+            )
 
-        # Crear o recuperar país
-        pais, _ = Pais.objects.get(codigo=validated_data.pop(
-            'codigo_pais'), defaults={"nombre": "Desconocido"})
+        # Validar y obtener país
+        codigo_pais_id = validated_data.pop('codigo_pais', None)
+        if not codigo_pais_id:
+            raise serializers.ValidationError(
+                {"codigo_pais": "Este campo es obligatorio."}
+            )
+        try:
+            pais, _ = Pais.objects.get_or_create(id=codigo_pais_id)
+        except Pais.DoesNotExist:
+            raise serializers.ValidationError(
+                {"codigo_pais": "País no válido."}
+            )
 
         # Crear o recuperar ingeniero
-        ingeniero = Ingeniero.objects.create(
+        ingeniero, _ = Ingeniero.objects.get_or_create(
+            tipo_documento=tipo_documento,
+            pais=pais,
             apellido_paterno=validated_data.pop('apellido_paterno'),
             apellido_materno=validated_data.pop('apellido_materno'),
             nombres=validated_data.pop('nombres'),
-            tipo_documento=tipo_documento,
             numero_documento=validated_data.pop('numero_documento'),
             correo=validated_data.pop('correo'),
-            pais=pais,
             celular=validated_data.pop('celular')
         )
 
         # Crear o recuperar capitulo
-        codigo_capitulo = validated_data.pop('codigo_capitulo')
-        nombre_capitulo = validated_data.pop('capitulo')
-        capitulo, _ = Capitulo.objects.get_or_create(
-            codigo=codigo_capitulo, defaults={"nombre": nombre_capitulo})
+        capitulo_id = validated_data.pop('capitulo', None)
+        if not capitulo_id:
+            raise serializers.ValidationError(
+                {"capitulo": "Este campo es obligatorio."}
+            )
+        capitulo, _ = Capitulo.objects.get_or_create(id=capitulo_id)
+        if not capitulo:
+            raise serializers.ValidationError(
+                {"capitulo": "Capítulo no válido."}
+            )
 
         # Crear o recuperar tipo colegiado
+        tipo_colegiado_id = validated_data.pop('tipo_colegiado', None)
+        if not tipo_colegiado_id:
+            raise serializers.ValidationError(
+                {"tipo_colegiado": "Este campo es obligatorio."}
+            )
         tipo_colegiado, _ = TipoColegiado.objects.get_or_create(
-            descripcion=validated_data.pop('tipo_colegiado'))
+            id=tipo_colegiado_id
+        )
 
         # Crear o recuperar consejo departamental
+        consejo_departamental_id = validated_data.pop(
+            'consejo_departamental', None
+        )
+        if not consejo_departamental_id:
+            raise serializers.ValidationError(
+                {"consejo_departamental": "Este campo es obligatorio."}
+            )
         consejo, _ = ConsejoDepartamental.objects.get_or_create(
-            departamento=validated_data.pop('consejo_departamental'))
+            id=consejo_departamental_id
+        )
 
         # Crear o recuperar colegiatura
-        numero_colegiatura = validated_data.pop('colegiatura')
-        colegiatura, _ = Colegiatura.objects.get_or_create(
-            nombre=str(numero_colegiatura))
+        colegiatura_id = validated_data.pop('colegiatura', None)
+        if not colegiatura_id:
+            raise serializers.ValidationError(
+                {"colegiatura": "Este campo es obligatorio."}
+            )
+        try:
+            colegiatura, _ = Colegiatura.objects.get_or_create(
+                id=colegiatura_id)
+        except Colegiatura.DoesNotExist:
+            raise serializers.ValidationError(
+                {"colegiatura": "Colegiatura no válida."}
+            )
 
         # Crear o recuperar estado activo por defecto
-        activo, _ = Activo.objects.get_or_create(estado="Activo")
+        activo, _ = Activo.objects.get_or_create(
+            id=validated_data.pop('estado_activo', None))
 
         # Finalmente, crear Colegiado
         colegiado = Colegiado.objects.create(
@@ -89,72 +139,47 @@ class MembersSerializer(serializers.ModelSerializer):
         return colegiado
 
     def to_representation(self, instance):
-        """Customize the serialized output."""
-        representation = super().to_representation(instance)
-        
-        # Add related fields from Ingeniero model
-        Ingeniero = instance.ingeniero
-        if Ingeniero:
-            representation['ingeniero'] = {
-                'id': Ingeniero.id,
-                'apellido_paterno': Ingeniero.apellido_paterno,
-                'apellido_materno': Ingeniero.apellido_materno,
-                'nombres': Ingeniero.nombres,
-                'tipo_documento': {
-                    'id': Ingeniero.tipo_documento.id,
-                    'tipo': Ingeniero.tipo_documento.tipo
-                },
-                'numero_documento': Ingeniero.numero_documento,
-                'correo': Ingeniero.correo,
-                'codigo_pais': {
-                    'id': Ingeniero.pais.id,
-                    'codigo': Ingeniero.pais.codigo,
-                    'nombre': Ingeniero.pais.nombre
-                },
-                'celular': Ingeniero.celular
-            }
-        else:
-            representation['ingeniero'] = None
-        
+        """Customize the serialized output to avoid duplication."""
+        representation = {
+            "id": instance.id,
+            "estado_activo": instance.activo.id if instance.activo else None,
+            "ingeniero": {
+                "id": instance.ingeniero.id,
+                "apellido_paterno": instance.ingeniero.apellido_paterno,
+                "apellido_materno": instance.ingeniero.apellido_materno,
+                "nombres": instance.ingeniero.nombres,
+                "tipo_documento": {
+                    "id": instance.ingeniero.tipo_documento.id,
+                    "tipo": instance.ingeniero.tipo_documento.tipo
+                } if instance.ingeniero.tipo_documento else None,
+                "numero_documento": instance.ingeniero.numero_documento,
+                "correo": instance.ingeniero.correo,
+                "codigo_pais": {
+                    "id": instance.ingeniero.pais.id,
+                    "codigo": instance.ingeniero.pais.codigo,
+                    "nombre": instance.ingeniero.pais.nombre
+                } if instance.ingeniero.pais else None,
+                "celular": instance.ingeniero.celular
+            } if instance.ingeniero else None,
+            "capitulo": {
+                "id": instance.capitulo.id,
+                "codigo": instance.capitulo.codigo,
+                "nombre": instance.capitulo.nombre
+            } if instance.capitulo else None,
+            "consejo_departamental": {
+                "id": instance.consejo_departamental.id,
+                "departamento": instance.consejo_departamental.departamento
+            } if instance.consejo_departamental else None,
+            "colegiatura": {
+                "id": instance.colegiatura.id,
+                "nombre": instance.colegiatura.nombre
+            } if instance.colegiatura else None,
+            "tipo_colegiado": {
+                "id": instance.tipo_colegiado.id,
+                "descripcion": instance.tipo_colegiado.descripcion
+            } if instance.tipo_colegiado else None,
 
-        # Add related fields from other models
-        Capitulo = instance.capitulo
-        if Capitulo:
-            representation['capitulo'] = {
-                'id': Capitulo.id,
-                'codigo': Capitulo.codigo,
-                'nombre': Capitulo.nombre
-            }
-        else:
-            representation['capitulo'] = None
-
-        TipoColegiado = instance.tipo_colegiado
-        if TipoColegiado:
-            representation['tipo_colegiado'] = {
-                'id': TipoColegiado.id,
-                'descripcion': TipoColegiado.descripcion
-            }
-        else:
-            representation['tipo_colegiado'] = None
-        
-        ConsejoDepartamental = instance.consejo_departamental
-        if ConsejoDepartamental:
-            representation['consejo_departamental'] = {
-                'id': ConsejoDepartamental.id,
-                'departamento': ConsejoDepartamental.departamento
-            }
-        else:
-            representation['consejo_departamental'] = None
-
-        Colegiatura = instance.colegiatura
-        if Colegiatura:
-            representation['colegiatura'] = {
-                'id': Colegiatura.id,
-                'nombre': Colegiatura.nombre
-            }
-        else:
-            representation['colegiatura'] = None
-
+        }
         return representation
 
     def update(self, instance, validated_data):

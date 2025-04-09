@@ -12,8 +12,7 @@ class MembersViewSet(viewsets.ModelViewSet):
     queryset = Members.objects.all()
     serializer_class = MembersSerializer
     ordering_fields = '__all__'
-    ordering = ['-created_at']
-    
+
 
 
 class EngineersViewSet(viewsets.ModelViewSet):

@@ -29,7 +29,7 @@ class EngineerSerializer(serializers.ModelSerializer):
         Create a new Ingeniero instance.
         """
         instance = super().create(validated_data)
-        # Add any post-creation logic here if needed
+
         return instance
     
     def to_representation(self, instance):
