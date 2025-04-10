@@ -14,9 +14,14 @@ class Colegiado(models.Model):
     
     def delete_logical(self):
         """Realiza una eliminación lógica del colegiado."""
-        inactivo, _ = Activo.objects.get_or_create(estado="Inactivo")
+        try:
+            inactivo = Activo.objects.get(id=1)  # Asumiendo que el estado inactivo tiene id=1
+        except Activo.DoesNotExist:
+            inactivo, _ = Activo.objects.get_or_create(estado="Inactivo")
+        
         self.activo = inactivo
         self.save()
+        return True
 
 
 class Ingeniero(models.Model):

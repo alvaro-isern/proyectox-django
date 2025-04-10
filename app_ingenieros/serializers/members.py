@@ -6,18 +6,15 @@ from app_ingenieros.models import (
 
 
 class MembersSerializer(serializers.ModelSerializer):
-    nombres = serializers.CharField(source='ingeniero.nombres')
-    apellido_materno = serializers.CharField(
-        source='ingeniero.apellido_materno')
-    apellido_paterno = serializers.CharField(
-        source='ingeniero.apellido_paterno')
+    nombres = serializers.CharField()
+    apellido_materno = serializers.CharField()
+    apellido_paterno = serializers.CharField()
     tipo_documento = serializers.IntegerField()
-    numero_documento = serializers.CharField(
-        source='ingeniero.numero_documento')
-    correo = serializers.EmailField(source='ingeniero.correo')
+    numero_documento = serializers.CharField()
+    correo = serializers.EmailField()
     codigo_pais = serializers.IntegerField()
-    celular = serializers.CharField(source='ingeniero.celular')
-    estado_activo = serializers.IntegerField()
+    celular = serializers.CharField()
+    estado_activo = serializers.IntegerField(read_only=True)
     capitulo = serializers.IntegerField()
     consejo_departamental = serializers.IntegerField()
     colegiatura = serializers.IntegerField()
@@ -31,102 +28,87 @@ class MembersSerializer(serializers.ModelSerializer):
             'estado_activo', 'capitulo', 'consejo_departamental', 'colegiatura',
             'tipo_colegiado'
         ]
-        read_only_fields = ['id', 'estado_activo']
-        # read_only_fields = ['documento']
+        read_only_fields = ['id']
+
+    def validate_required_field(self, field_name, field_value, model_class, error_message):
+        """Método auxiliar para validar campos requeridos"""
+        if not field_value:
+            raise serializers.ValidationError({field_name: "Este campo es obligatorio."})
+        try:
+            return model_class.objects.get(id=field_value)
+        except model_class.DoesNotExist:
+            raise serializers.ValidationError({field_name: error_message})
 
     def create(self, validated_data):
-        # Validar y obtener tipo de documento
-        tipo_documento_id = validated_data.pop('tipo_documento', None)
-        if not tipo_documento_id:
-            raise serializers.ValidationError(
-                {"tipo_documento": "Este campo es obligatorio."}
-            )
+        # Validar y obtener objetos relacionados
+        tipo_documento = self.validate_required_field(
+            'tipo_documento', 
+            validated_data.pop('tipo_documento', None),
+            TipoDocumento,
+            "Tipo de documento no válido."
+        )
+
+        pais = self.validate_required_field(
+            'codigo_pais',
+            validated_data.pop('codigo_pais', None),
+            Pais,
+            "País no válido."
+        )
+
+        capitulo = self.validate_required_field(
+            'capitulo',
+            validated_data.pop('capitulo', None),
+            Capitulo,
+            "Capítulo no válido."
+        )
+
+        tipo_colegiado = self.validate_required_field(
+            'tipo_colegiado',
+            validated_data.pop('tipo_colegiado', None),
+            TipoColegiado,
+            "Tipo de colegiado no válido."
+        )
+
+        consejo = self.validate_required_field(
+            'consejo_departamental',
+            validated_data.pop('consejo_departamental', None),
+            ConsejoDepartamental,
+            "Consejo departamental no válido."
+        )
+
+        colegiatura = self.validate_required_field(
+            'colegiatura',
+            validated_data.pop('colegiatura', None),
+            Colegiatura,
+            "Colegiatura no válida."
+        )
+
+        # Obtener estado activo
         try:
-            tipo_documento, _ = TipoDocumento.objects.get_or_create(
-                id=tipo_documento_id)
-        except TipoDocumento.DoesNotExist:
+            activo = Activo.objects.get(id=2)
+        except Activo.DoesNotExist:
             raise serializers.ValidationError(
-                {"tipo_documento": "Tipo de documento no válido."}
+                {"estado_activo": "El estado activo con id=2 no existe en la base de datos."}
             )
 
-        # Validar y obtener país
-        codigo_pais_id = validated_data.pop('codigo_pais', None)
-        if not codigo_pais_id:
-            raise serializers.ValidationError(
-                {"codigo_pais": "Este campo es obligatorio."}
-            )
-        try:
-            pais, _ = Pais.objects.get_or_create(id=codigo_pais_id)
-        except Pais.DoesNotExist:
-            raise serializers.ValidationError(
-                {"codigo_pais": "País no válido."}
-            )
+        # Crear o actualizar ingeniero
+        ingeniero_data = {
+            'tipo_documento': tipo_documento,
+            'pais': pais,
+            'apellido_paterno': validated_data.pop('apellido_paterno'),
+            'apellido_materno': validated_data.pop('apellido_materno'),
+            'nombres': validated_data.pop('nombres'),
+            'numero_documento': validated_data.pop('numero_documento'),
+            'correo': validated_data.pop('correo'),
+            'celular': validated_data.pop('celular')
+        }
 
-        # Crear o recuperar ingeniero
-        ingeniero, _ = Ingeniero.objects.get_or_create(
-            tipo_documento=tipo_documento,
-            pais=pais,
-            apellido_paterno=validated_data.pop('apellido_paterno'),
-            apellido_materno=validated_data.pop('apellido_materno'),
-            nombres=validated_data.pop('nombres'),
-            numero_documento=validated_data.pop('numero_documento'),
-            correo=validated_data.pop('correo'),
-            celular=validated_data.pop('celular')
+        ingeniero, _ = Ingeniero.objects.update_or_create(
+            numero_documento=ingeniero_data['numero_documento'],
+            defaults=ingeniero_data
         )
 
-        # Crear o recuperar capitulo
-        capitulo_id = validated_data.pop('capitulo', None)
-        if not capitulo_id:
-            raise serializers.ValidationError(
-                {"capitulo": "Este campo es obligatorio."}
-            )
-        capitulo, _ = Capitulo.objects.get_or_create(id=capitulo_id)
-        if not capitulo:
-            raise serializers.ValidationError(
-                {"capitulo": "Capítulo no válido."}
-            )
-
-        # Crear o recuperar tipo colegiado
-        tipo_colegiado_id = validated_data.pop('tipo_colegiado', None)
-        if not tipo_colegiado_id:
-            raise serializers.ValidationError(
-                {"tipo_colegiado": "Este campo es obligatorio."}
-            )
-        tipo_colegiado, _ = TipoColegiado.objects.get_or_create(
-            id=tipo_colegiado_id
-        )
-
-        # Crear o recuperar consejo departamental
-        consejo_departamental_id = validated_data.pop(
-            'consejo_departamental', None
-        )
-        if not consejo_departamental_id:
-            raise serializers.ValidationError(
-                {"consejo_departamental": "Este campo es obligatorio."}
-            )
-        consejo, _ = ConsejoDepartamental.objects.get_or_create(
-            id=consejo_departamental_id
-        )
-
-        # Crear o recuperar colegiatura
-        colegiatura_id = validated_data.pop('colegiatura', None)
-        if not colegiatura_id:
-            raise serializers.ValidationError(
-                {"colegiatura": "Este campo es obligatorio."}
-            )
-        try:
-            colegiatura, _ = Colegiatura.objects.get_or_create(
-                id=colegiatura_id)
-        except Colegiatura.DoesNotExist:
-            raise serializers.ValidationError(
-                {"colegiatura": "Colegiatura no válida."}
-            )
-
-        # Crear o recuperar estado activo por defecto
-        activo, _ = Activo.objects.get_or_create(
-            id=validated_data.pop('estado_activo', None))
-
-        # Finalmente, crear Colegiado
+        # Crear colegiado
         colegiado = Colegiado.objects.create(
             ingeniero=ingeniero,
             capitulo=capitulo,
@@ -139,8 +121,8 @@ class MembersSerializer(serializers.ModelSerializer):
         return colegiado
 
     def to_representation(self, instance):
-        """Customize the serialized output to avoid duplication."""
-        representation = {
+        """Representación personalizada del objeto"""
+        return {
             "id": instance.id,
             "estado_activo": instance.activo.id if instance.activo else None,
             "ingeniero": {
@@ -178,59 +160,54 @@ class MembersSerializer(serializers.ModelSerializer):
                 "id": instance.tipo_colegiado.id,
                 "descripcion": instance.tipo_colegiado.descripcion
             } if instance.tipo_colegiado else None,
-
         }
-        return representation
 
     def update(self, instance, validated_data):
-        # Actualizar o recuperar tipo de documento
-        if 'tipo_documento' in validated_data:
-            tipo_documento, _ = TipoDocumento.objects.get_or_create(
-                tipo=validated_data.pop('tipo_documento'))
-            instance.ingeniero.tipo_documento = tipo_documento
-
-        # Actualizar o recuperar país
-        if 'codigo_pais' in validated_data:
-            pais, _ = Pais.objects.get_or_create(codigo=validated_data.pop(
-                'codigo_pais'), defaults={"nombre": "Desconocido"})
-            instance.ingeniero.pais = pais
-
         # Actualizar datos del ingeniero
-        ingeniero_fields = ['apellido_paterno', 'apellido_materno',
-                            'nombres', 'numero_documento', 'correo', 'celular']
-        for field in ingeniero_fields:
+        ingeniero_data = {}
+        for field in ['tipo_documento', 'codigo_pais', 'apellido_paterno', 
+                     'apellido_materno', 'nombres', 'numero_documento', 
+                     'correo', 'celular']:
             if field in validated_data:
-                setattr(instance.ingeniero, field, validated_data.pop(field))
-        instance.ingeniero.save()
+                if field == 'tipo_documento':
+                    ingeniero_data['tipo_documento'] = self.validate_required_field(
+                        'tipo_documento',
+                        validated_data.pop('tipo_documento'),
+                        TipoDocumento,
+                        "Tipo de documento no válido."
+                    )
+                elif field == 'codigo_pais':
+                    ingeniero_data['pais'] = self.validate_required_field(
+                        'codigo_pais',
+                        validated_data.pop('codigo_pais'),
+                        Pais,
+                        "País no válido."
+                    )
+                else:
+                    ingeniero_data[field] = validated_data.pop(field)
 
-        # Actualizar o recuperar capitulo
-        if 'codigo_capitulo' in validated_data and 'capitulo' in validated_data:
-            codigo_capitulo = validated_data.pop('codigo_capitulo')
-            nombre_capitulo = validated_data.pop('capitulo')
-            capitulo, _ = Capitulo.objects.get_or_create(
-                codigo=codigo_capitulo, defaults={"nombre": nombre_capitulo})
-            instance.capitulo = capitulo
+        if ingeniero_data:
+            for key, value in ingeniero_data.items():
+                setattr(instance.ingeniero, key, value)
+            instance.ingeniero.save()
 
-        # Actualizar o recuperar tipo colegiado
-        if 'tipo_colegiado' in validated_data:
-            tipo_colegiado, _ = TipoColegiado.objects.get_or_create(
-                descripcion=validated_data.pop('tipo_colegiado'))
-            instance.tipo_colegiado = tipo_colegiado
+        # Actualizar otros campos del colegiado
+        for field in ['capitulo', 'tipo_colegiado', 'consejo_departamental', 'colegiatura']:
+            if field in validated_data:
+                model_class = {
+                    'capitulo': Capitulo,
+                    'tipo_colegiado': TipoColegiado,
+                    'consejo_departamental': ConsejoDepartamental,
+                    'colegiatura': Colegiatura
+                }[field]
+                
+                value = self.validate_required_field(
+                    field,
+                    validated_data.pop(field),
+                    model_class,
+                    f"{field.replace('_', ' ').title()} no válido."
+                )
+                setattr(instance, field, value)
 
-        # Actualizar o recuperar consejo departamental
-        if 'consejo_departamental' in validated_data:
-            consejo, _ = ConsejoDepartamental.objects.get_or_create(
-                departamento=validated_data.pop('consejo_departamental'))
-            instance.consejo_departamental = consejo
-
-        # Actualizar o recuperar colegiatura
-        if 'colegiatura' in validated_data:
-            numero_colegiatura = validated_data.pop('colegiatura')
-            colegiatura, _ = Colegiatura.objects.get_or_create(
-                nombre=str(numero_colegiatura))
-            instance.colegiatura = colegiatura
-
-        # Guardar cambios en el objeto Colegiado
         instance.save()
-
         return instance

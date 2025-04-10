@@ -4,15 +4,12 @@ from app_ingenieros.models import Colegiado as Members, Ingeniero as Engineers, 
 from app_ingenieros.serializers.members import MembersSerializer
 from app_ingenieros.serializers.engineers import EngineerSerializer
 from app_ingenieros.serializers.document_type import DocumentTypeSerializer
-from rest_framework.response import Response
-from rest_framework import status
 
 
 class MembersViewSet(viewsets.ModelViewSet):
     queryset = Members.objects.all()
     serializer_class = MembersSerializer
     ordering_fields = '__all__'
-
 
 
 class EngineersViewSet(viewsets.ModelViewSet):
