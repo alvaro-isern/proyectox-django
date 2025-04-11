@@ -13,7 +13,7 @@ class MembersViewSet(viewsets.ModelViewSet):
 
 
 class EngineersViewSet(viewsets.ModelViewSet):
-    queryset = Engineers.objects.select_related('tipo_documento', 'pais').all()
+    queryset = Engineers.objects.all()
     serializer_class = EngineerSerializer
     ordering_fields = '__all__'
     ordering = ['-created_at']

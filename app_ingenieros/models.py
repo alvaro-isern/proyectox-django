@@ -1,7 +1,21 @@
 from django.db import models
-
+from django.utils import timezone
 # Create your models here.
-class Colegiado(models.Model):
+class SoftDeleteManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(deleted_at__isnull=True)
+
+class BaseModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    
+    objects = SoftDeleteManager()
+    
+    class Meta:
+        abstract = True
+
+class Colegiado(BaseModel):
     ingeniero = models.ForeignKey('Ingeniero', on_delete=models.CASCADE, related_name='colegiados')
     colegiatura = models.ForeignKey('Colegiatura', on_delete=models.CASCADE, related_name='colegiados')
     tipo_colegiado = models.ForeignKey('TipoColegiado', on_delete=models.CASCADE, related_name='colegiados')
@@ -9,22 +23,15 @@ class Colegiado(models.Model):
     capitulo = models.ForeignKey('Capitulo', on_delete=models.CASCADE, related_name='colegiados')
     activo = models.ForeignKey('Activo', on_delete=models.CASCADE, related_name='colegiados')
 
+    def delete(self, using=None, keep_parents=False):
+        self.activo = Activo.objects.get(id=1)
+        self.deleted_at = timezone.now()
+        self.save()
+
     class Meta:
         db_table = 'colegiados'
-    
-    def delete_logical(self):
-        """Realiza una eliminación lógica del colegiado."""
-        try:
-            inactivo = Activo.objects.get(id=1)  # Asumiendo que el estado inactivo tiene id=1
-        except Activo.DoesNotExist:
-            inactivo, _ = Activo.objects.get_or_create(estado="Inactivo")
-        
-        self.activo = inactivo
-        self.save()
-        return True
 
-
-class Ingeniero(models.Model):
+class Ingeniero(BaseModel):
     apellido_paterno = models.CharField(max_length=50)
     apellido_materno = models.CharField(max_length=50)
     nombres = models.CharField(max_length=50)
