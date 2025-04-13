@@ -1,102 +1,101 @@
 from django.db import models
-from app_ingenieros.models import Colegiado 
+from app_ingenieros.models import Member
 
-class MetodoPago(models.Model):
-    nombre = models.CharField(
+class PaymentMethod(models.Model):
+    name = models.CharField(
         max_length=50,
         unique=True,
         verbose_name="Método de Pago",
     )
 
     def __str__(self):
-        return self.nombre
+        return self.name
 
     class Meta:
-        db_table = 'metodos_pago'
-        verbose_name = "Método de Pago"
-        verbose_name_plural = "Métodos de Pago"
+        db_table = 'payment_methods'
+        verbose_name = "Payment Method"
+        verbose_name_plural = "Payment Methods"
 
 
-class Cuota(models.Model):
-    colegiado = models.ForeignKey(
-        Colegiado,
+class PaymentFee(models.Model):
+    member = models.ForeignKey(
+        Member,
         on_delete=models.CASCADE,
-        related_name='cuotas',
-        verbose_name="Colegiado",
+        related_name='payment_fees',
+        verbose_name="Member",
     )
-    fecha_vencimiento = models.DateField(
-        verbose_name="Fecha de Vencimiento",
+    due_date = models.DateField(
+        verbose_name="Due Date",
     )
-    monto = models.DecimalField(
+    amount = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        verbose_name="Monto",
+        verbose_name="Amount",
     )
-    estado_cuota = models.ForeignKey(
-        'EstadoCuota',
+    quota_status = models.ForeignKey(
+        'QuotaStatus',
         on_delete=models.CASCADE,
-        related_name='cuotas',
-        verbose_name="Estado de Cuota",
+        related_name='payment_fees',
+        verbose_name="Quota Status",
     )
 
     def __str__(self):
-        return f"Cuota de {self.colegiado} - Vence: {self.fecha_vencimiento}"
+        return f"Member: {self.member} - Expiration Date: {self.due_date}"
 
     class Meta:
-        db_table = 'cuotas'
-        ordering = ['fecha_vencimiento']
-        verbose_name = "Cuota"
-        verbose_name_plural = "Cuotas"
+        db_table = 'payment_fees'
+        ordering = ['due_date']
+        verbose_name = "Payment Fee"
+        verbose_name_plural = "Payment Fees"
 
 
-class Pagos(models.Model):
-    colegiado = models.ForeignKey(
-        Colegiado,
+class Payment(models.Model):
+    member = models.ForeignKey(
+        Member,
         on_delete=models.CASCADE,
-        related_name='pagos',
-        verbose_name="Colegiado",
+        related_name='payments',
+        verbose_name="Member",
     )
-    fecha_pago = models.DateField(
-        verbose_name="Fecha de Pago",
+    payment_date = models.DateField(
+        verbose_name="Payment Date",
     )
-    monto_pago = models.DecimalField(
+    payment_amount = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        verbose_name="Monto del Pago",
+        verbose_name="Payment Amount",
     )
-    metodo_pago = models.ForeignKey(
-        'MetodoPago',
+    payment_method = models.ForeignKey(
+        'PaymentMethod',
         on_delete=models.CASCADE,
-        related_name='pagos',
-        verbose_name="Método de Pago",
+        related_name='payments',
+        verbose_name="Payment Method",
     )
-    cuota = models.ForeignKey(
-        'Cuota',
+    payment_fee = models.ForeignKey(
+        'PaymentFee',
         on_delete=models.CASCADE,
-        related_name='pagos',
-        verbose_name="Cuota",
+        related_name='payments',
+        verbose_name="Payment Fee",
     )
 
     def __str__(self):
-        return f"Pago de {self.colegiado} - {self.fecha_pago} - {self.monto_pago}"
+        return f"Payment: {self.member} - {self.payment_date} - {self.payment_amount}"
 
     class Meta:
-        db_table = 'pagos'
-        ordering = ['-fecha_pago']
-        verbose_name = "Pago"
-        verbose_name_plural = "Pagos"
+        db_table = 'payments'
+        ordering = ['-payment_date']
+        verbose_name = "Payment"
+        verbose_name_plural = "Payments"
 
-class EstadoCuota(models.Model):
-    estado = models.CharField(
+class QuotaStatus(models.Model):
+    quota_status = models.CharField(
         max_length=20,
         unique=True,
-        verbose_name="Estado de Cuota",
+        verbose_name="Quota Status",
     )
 
     def __str__(self):
-        return self.estado
+        return self.quota_status
 
     class Meta:
-        db_table = 'estado_cuota'
-        verbose_name = "Estado de Cuota"
-        verbose_name_plural = "Estados de Cuota"
+        db_table = 'quota_status'
+        verbose_name = "Quota Status"

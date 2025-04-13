@@ -1,27 +1,26 @@
 from rest_framework import serializers
 from app_ingenieros.models import (
-    Colegiado, Ingeniero, TipoDocumento, Pais, Activo,
-    Colegiatura, Capitulo, TipoColegiado, ConsejoDepartamental
+    Member, Engineer, DocumentType, Country, Status,
+    CollegiateType, DepartmentalCouncil, Chapter
 )
 
 
 class MembersSerializer(serializers.ModelSerializer):
-    # Campos del ingeniero
-    nombres = serializers.CharField()
-    apellido_materno = serializers.CharField()
-    apellido_paterno = serializers.CharField()
-    tipo_documento = serializers.IntegerField()
-    numero_documento = serializers.CharField()
-    correo = serializers.EmailField()
-    codigo_pais = serializers.IntegerField()
-    celular = serializers.CharField()
+    names = serializers.CharField()
+    maternal_surname = serializers.CharField()
+    paternal_surname = serializers.CharField()
+    document_type = serializers.IntegerField()
+    document_number = serializers.CharField()
+    email = serializers.EmailField()
+    country_code = serializers.IntegerField()
+    mobile = serializers.CharField()
 
     # Campos del colegiado
-    estado_activo = serializers.IntegerField(read_only=True)
-    capitulo = serializers.IntegerField()
-    consejo_departamental = serializers.IntegerField()
-    colegiatura = serializers.IntegerField()
-    tipo_colegiado = serializers.IntegerField()
+    status = serializers.IntegerField(read_only=True)
+    chapter = serializers.IntegerField()
+    departmental_council = serializers.IntegerField()
+    collegiate_code = serializers.CharField()
+    collegiate_type = serializers.IntegerField()
 
     class Meta:
         model = Colegiado

@@ -15,82 +15,76 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True
 
-class Colegiado(BaseModel):
-    ingeniero = models.ForeignKey('Ingeniero', on_delete=models.CASCADE, related_name='colegiados')
-    colegiatura = models.ForeignKey('Colegiatura', on_delete=models.CASCADE, related_name='colegiados')
-    tipo_colegiado = models.ForeignKey('TipoColegiado', on_delete=models.CASCADE, related_name='colegiados')
-    consejo_departamental = models.ForeignKey('ConsejoDepartamental', on_delete=models.CASCADE, related_name='colegiados')
-    capitulo = models.ForeignKey('Capitulo', on_delete=models.CASCADE, related_name='colegiados')
-    activo = models.ForeignKey('Activo', on_delete=models.CASCADE, related_name='colegiados')
+class Member(BaseModel):
+    colligiate_code = models.CharField(max_length=20, unique=True)
+    engineer = models.ForeignKey('Engineer', on_delete=models.CASCADE, related_name='members')
+    collegiate_type = models.ForeignKey('CollegiateType', on_delete=models.CASCADE, related_name='members')
+    dept_council = models.ForeignKey('DepartmentalCouncil', on_delete=models.CASCADE, related_name='members')
+    chapter = models.ForeignKey('Chapter', on_delete=models.CASCADE, related_name='members')
+    status = models.ForeignKey('Status', on_delete=models.CASCADE, related_name='members')
 
     def delete(self, using=None, keep_parents=False):
-        self.activo = Activo.objects.get(id=1)
+        self.status = Status.objects.get(id=1)
         self.deleted_at = timezone.now()
         self.save()
 
     class Meta:
-        db_table = 'colegiados'
+        db_table = 'members'
 
-class Ingeniero(BaseModel):
-    apellido_paterno = models.CharField(max_length=50)
-    apellido_materno = models.CharField(max_length=50)
-    nombres = models.CharField(max_length=50)
-    tipo_documento = models.ForeignKey('TipoDocumento', on_delete=models.CASCADE, related_name='ingenieros')
-    numero_documento = models.CharField(max_length=20, unique=True)
-    correo = models.EmailField(max_length=100, unique=True)
-    pais = models.ForeignKey('Pais', on_delete=models.CASCADE, related_name='ingenieros')
-    celular = models.CharField(max_length=15, unique=True)
-
-    class Meta:
-        db_table = 'ingenieros'
-
-
-class TipoDocumento(models.Model):
-    tipo = models.CharField(max_length=50, unique=True)
+class Engineer(BaseModel):
+    paternal_surname = models.CharField(max_length=50)
+    maternal_surname = models.CharField(max_length=50)
+    names = models.CharField(max_length=50)
+    doc_type = models.ForeignKey('DocumentType', on_delete=models.CASCADE, related_name='engineers')
+    doc_number = models.CharField(max_length=20, unique=True)
+    email = models.EmailField(max_length=100, unique=True)
+    country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='engineers')
+    cellphone = models.CharField(max_length=15, unique=True)
 
     class Meta:
-        db_table = 'tipo_documento'
+        db_table = 'engineers'
 
 
-class Pais(models.Model):
-    codigo = models.CharField(max_length=10, unique=True)
-    nombre = models.CharField(max_length=100, unique=True)
-
-    class Meta:
-        db_table = 'pais'
-
-
-class Activo(models.Model):
-    estado = models.CharField(max_length=20, unique=True)
+class DocumentType(models.Model):
+    doc_type = models.CharField(max_length=50, unique=True)
 
     class Meta:
-        db_table = 'activo'
+        db_table = 'documents_types'
 
 
-class Colegiatura(models.Model):
-    nombre = models.CharField(max_length=100, unique=True)
-
-    class Meta:
-        db_table = 'colegiaturas'
-
-
-class Capitulo(models.Model):
-    codigo = models.CharField(max_length=10, unique=True)
-    nombre = models.CharField(max_length=100, unique=True)
+class Country(models.Model):
+    country_cod = models.CharField(max_length=10, unique=True)
+    iso_code = models.CharField(max_length=10, unique=True)
+    name = models.CharField(max_length=100, unique=True)
 
     class Meta:
-        db_table = 'capitulos'
+        db_table = 'countries'
 
 
-class TipoColegiado(models.Model):
-    descripcion = models.CharField(max_length=100, unique=True)
-
-    class Meta:
-        db_table = 'tipo_colegiado'
-
-
-class ConsejoDepartamental(models.Model):
-    departamento = models.CharField(max_length=100, unique=True)
+class Status(models.Model):
+    status_type = models.CharField(max_length=20, unique=True)
 
     class Meta:
-        db_table = 'consejo_departamental'
+        db_table = 'status'
+
+
+class Chapter(models.Model):
+    chapter_cod = models.CharField(max_length=10, unique=True)
+    name = models.CharField(max_length=100, unique=True)
+
+    class Meta:
+        db_table = 'chapters'
+
+
+class CollegiateType(models.Model):
+    colle_type = models.CharField(max_length=100, unique=True)
+
+    class Meta:
+        db_table = 'collegiate_types'
+
+
+class DepartmentalCouncil(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    class Meta:
+        db_table = 'departmental_councils'
