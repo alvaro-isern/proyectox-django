@@ -13,7 +13,7 @@ class MembersSerializer(serializers.ModelSerializer):
     document_number = serializers.CharField()
     email = serializers.EmailField()
     country_code = serializers.IntegerField()
-    mobile = serializers.CharField()
+    cellphone = serializers.CharField()
 
     # Campos del colegiado
     status = serializers.IntegerField(read_only=True)
@@ -23,12 +23,22 @@ class MembersSerializer(serializers.ModelSerializer):
     collegiate_type = serializers.IntegerField()
 
     class Meta:
-        model = Colegiado
+        model = Member
         fields = [
-            'id', 'apellido_paterno', 'apellido_materno', 'nombres',
-            'tipo_documento', 'numero_documento', 'correo', 'codigo_pais', 'celular',
-            'estado_activo', 'capitulo', 'consejo_departamental', 'colegiatura',
-            'tipo_colegiado'
+            'id',
+            'status',
+            'names',
+            'paternal_surname',
+            'maternal_surname',
+            'collegiate_code',
+            'chapter',
+            'departmental_council',
+            'collegiate_type',
+            'document_type',
+            'document_number',
+            'email',
+            'country_code',
+            'cellphone'
         ]
         read_only_fields = ['id']
 
@@ -45,12 +55,11 @@ class MembersSerializer(serializers.ModelSerializer):
     def _get_related_objects(self, validated_data):
         """Obtiene y valida todos los objetos relacionados"""
         fields_to_validate = {
-            'tipo_documento': (TipoDocumento, "Tipo de documento no válido."),
-            'codigo_pais': (Pais, "País no válido."),
-            'capitulo': (Capitulo, "Capítulo no válido."),
-            'tipo_colegiado': (TipoColegiado, "Tipo de colegiado no válido."),
-            'consejo_departamental': (ConsejoDepartamental, "Consejo departamental no válido."),
-            'colegiatura': (Colegiatura, "Colegiatura no válida.")
+            'document_type': (DocumentType, "Tipo de documento no válido."),
+            'country_code': (Country, "País no válido."),
+            'chapter': (Chapter, "Capítulo no válido."),
+            'collegiate_type': (CollegiateType, "Tipo de colegiado no válido."),
+            'departmental_council': (DepartmentalCouncil, "Consejo departamental no válido.")
         }
 
         result = {}
@@ -63,108 +72,108 @@ class MembersSerializer(serializers.ModelSerializer):
             )
         return result
 
-    def _get_ingeniero_data(self, validated_data, related_objects):
+    def _get_engineer_data(self, validated_data, related_objects):
         """Prepara los datos del ingeniero"""
         return {
-            'tipo_documento': related_objects['tipo_documento'],
-            'pais': related_objects['codigo_pais'],
-            'apellido_paterno': validated_data.pop('apellido_paterno'),
-            'apellido_materno': validated_data.pop('apellido_materno'),
-            'nombres': validated_data.pop('nombres'),
-            'numero_documento': validated_data.pop('numero_documento'),
-            'correo': validated_data.pop('correo'),
-            'celular': validated_data.pop('celular')
+            'documents_types': related_objects['document_type'],
+            'countries': related_objects['country_code'],
+            'paternal_surname': validated_data.pop('paternal_surname'),
+            'maternal_surname': validated_data.pop('maternal_surname'),
+            'names': validated_data.pop('names'),
+            'doc_number': validated_data.pop('document_number'),
+            'email': validated_data.pop('email'),
+            'cellphone': validated_data.pop('cellphone'),
         }
 
     def create(self, validated_data):
         # Obtener y validar objetos relacionados
         related_objects = self._get_related_objects(validated_data)
 
-        # Obtener estado activo
+        # Obtener estado active
         try:
-            activo = Activo.objects.get(id=2)
-        except Activo.DoesNotExist:
+            active = Status.objects.get(id=2)
+        except Status.DoesNotExist:
             raise serializers.ValidationError(
                 {"estado_activo": "El estado no existe en la base de datos."}
             )
 
         # Crear o actualizar ingeniero
-        ingeniero_data = self._get_ingeniero_data(
+        engineer_data = self._get_engineer_data(
             validated_data, related_objects)
-        ingeniero, _ = Ingeniero.objects.update_or_create(
-            numero_documento=ingeniero_data['numero_documento'],
-            defaults=ingeniero_data
+        engineer, _ = Engineer.objects.update_or_create(
+            numero_documento=engineer_data['doc_number'],
+            defaults=engineer_data
         )
 
         # Crear colegiado
-        return Colegiado.objects.create(
-            ingeniero=ingeniero,
-            capitulo=related_objects['capitulo'],
-            tipo_colegiado=related_objects['tipo_colegiado'],
-            consejo_departamental=related_objects['consejo_departamental'],
-            colegiatura=related_objects['colegiatura'],
-            activo=activo
+        return Member.objects.create(
+            engineer=engineer,
+            collegiate_code=validated_data.pop('collegiate_code'),
+            chapter=related_objects['chapter'],
+            collegiate_type=related_objects['collegiate_type'],
+            departmental_council=related_objects['departmental_council'],
+            status=active,
         )
 
     def to_representation(self, instance):
         """Representación personalizada del objeto para el formulario"""
-        ingeniero = instance.ingeniero
+        engineer = instance.engineer
         return {
             'id': instance.id,
-            'estado_activo': getattr(instance.activo, 'id', None),
-            'apellido_paterno': ingeniero.apellido_paterno,
-            'apellido_materno': ingeniero.apellido_materno,
-            'nombres': ingeniero.nombres,
-            'tipo_documento': getattr(ingeniero.tipo_documento, 'id', None),
-            'numero_documento': ingeniero.numero_documento,
-            'correo': ingeniero.correo,
-            'codigo_pais': getattr(ingeniero.pais, 'id', None),
-            'celular': ingeniero.celular,
-            'capitulo': getattr(instance.capitulo, 'id', None),
-            'consejo_departamental': getattr(instance.consejo_departamental, 'id', None),
-            'colegiatura': getattr(instance.colegiatura, 'id', None),
-            'tipo_colegiado': getattr(instance.tipo_colegiado, 'id', None)
+            'status': getattr(instance.active, 'id', None),
+            'collegiate_code': instance.collegiate_code,
+            'paternal_surname': engineer.paternal_surname,
+            'maternal_surname': engineer.maternal_surname,
+            'names': engineer.names,
+            'document_type': getattr(engineer.document_type, 'id', None),
+            'document_number': engineer.doc_number,
+            'email': engineer.email,
+            'country_code': getattr(engineer.country, 'id', None),
+            'cellphone': engineer.cellphone,
+            'chapter': getattr(instance.chapter, 'id', None),
+            'departmental_council': getattr(instance.departmental_council, 'id', None),
+            'colligaite_type': getattr(instance.colligaite_type, 'id', None)
         }
 
     def update(self, instance, validated_data):
-        # Actualizar datos del ingeniero
-        ingeniero_data = {}
-        ingeniero_fields = {
-            'tipo_documento': (TipoDocumento, "Tipo de documento no válido."),
-            'codigo_pais': (Pais, "País no válido."),
-            'apellido_paterno': None,
-            'apellido_materno': None,
-            'nombres': None,
-            'numero_documento': None,
-            'correo': None,
-            'celular': None
+        # Actualizar datos del engineer
+        engineer_data = {}
+        engineer_fields = {
+            'document_type': (DocumentType, "Tipo de documento no válido."),
+            'country_code': (Country, "País no válido."),
+            'paternal_surname': None,
+            'maternal_surname': None,
+            'names': None,
+            'document_number': None,
+            'email': None,
+            'cellphone': None
         }
 
-        for field, validation in ingeniero_fields.items():
+        for field, validation in engineer_fields.items():
             if field in validated_data:
                 if validation:  # Si hay validación definida
                     model_class, error_message = validation
                     value = self.validate_required_field(
                         field, validated_data.pop(field), model_class, error_message)
-                    ingeniero_data[field if field !=
-                                   'codigo_pais' else 'pais'] = value
+                    engineer_data[field if field !=
+                                  'codigo_pais' else 'pais'] = value
                 else:  # Si no hay validación, usar el valor directamente
-                    ingeniero_data[field] = validated_data.pop(field)
+                    engineer_data[field] = validated_data.pop(field)
 
-        if ingeniero_data:
-            for key, value in ingeniero_data.items():
-                setattr(instance.ingeniero, key, value)
-            instance.ingeniero.save()
+        if engineer_data:
+            for key, value in engineer_data.items():
+                setattr(instance.engineer, key, value)
+            instance.engineer.save()
 
         # Actualizar campos del colegiado
-        colegiado_fields = {
-            'capitulo': (Capitulo, "Capítulo no válido."),
-            'tipo_colegiado': (TipoColegiado, "Tipo de colegiado no válido."),
-            'consejo_departamental': (ConsejoDepartamental, "Consejo departamental no válido."),
-            'colegiatura': (Colegiatura, "Colegiatura no válida.")
+        member_fields = {
+            'chapter': (Chapter, "Capítulo no válido."),
+            'collegiate_type': (CollegiateType, "Tipo de colegiado no válido."),
+            'departmental_council': (DepartmentalCouncil, "Consejo departamental no válido."),
+            'status': (Status, "Estado no válido.")
         }
 
-        for field, (model_class, error_message) in colegiado_fields.items():
+        for field, (model_class, error_message) in member_fields.items():
             if field in validated_data:
                 value = self.validate_required_field(
                     field,
@@ -181,10 +190,10 @@ class MembersSerializer(serializers.ModelSerializer):
         """Realiza una eliminación lógica del colegiado."""
         try:
             # Asumiendo que el estado inactivo tiene id=1
-            inactivo = Activo.objects.get(id=1)
-        except Activo.DoesNotExist:
+            inactive = Status.objects.get(id=1)
+        except Status.DoesNotExist:
             raise serializers.ValidationError(
-                {"estado_activo": "El estado no existe en la base de datos."}
+                {"status": "El estado no existe en la base de datos."}
             )
 
         instance.delete_logical()

@@ -1,6 +1,7 @@
 from django.db import models
 from app_ingenieros.models import Member
 
+
 class PaymentMethod(models.Model):
     name = models.CharField(
         max_length=50,
@@ -85,6 +86,7 @@ class Payment(models.Model):
         ordering = ['-payment_date']
         verbose_name = "Payment"
         verbose_name_plural = "Payments"
+
 
 class QuotaStatus(models.Model):
     quota_status = models.CharField(

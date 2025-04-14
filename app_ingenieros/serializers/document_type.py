@@ -1,11 +1,11 @@
 from rest_framework import serializers
-from app_ingenieros.models import TipoDocumento as DocumentType
+from app_ingenieros.models import DocumentType
 
 
 class DocumentTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = DocumentType
-        fields = ['id', 'tipo']
+        fields = ['id', 'doc_type']
         read_only_fields = ['id']
         extra_kwargs = {
             'created_at': {'read_only': True},
@@ -17,8 +17,8 @@ class DocumentTypeSerializer(serializers.ModelSerializer):
         Validate the data before creating or updating a DocumentType instance.
         """
         # Example validation: Ensure 'tipo' is not empty
-        if not data.get('tipo'):
-            raise serializers.ValidationError("Tipo field cannot be empty.")
+        if not data.get('doc_type'):
+            raise serializers.ValidationError("Document type field cannot be empty.")
         
         # Add any other custom validation logic here
         

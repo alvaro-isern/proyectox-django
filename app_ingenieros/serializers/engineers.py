@@ -1,10 +1,10 @@
 from rest_framework import serializers
-from app_ingenieros.models import Ingeniero
+from app_ingenieros.models import Engineer
 
 class EngineerSerializer(serializers.ModelSerializer):
     
     class Meta:
-        model = Ingeniero
+        model = Engineer
         fields = '__all__'
         read_only_fields = ['id']
         extra_kwargs = {
@@ -14,10 +14,10 @@ class EngineerSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         """
-        Validate the data before creating or updating an Ingeniero instance.
+        Validate the data before creating or updating an Engineer instance.
         """
         # Example validation: Ensure 'name' is not empty
-        if not data.get('nombres'):
+        if not data.get('names'):
             raise serializers.ValidationError("Name field cannot be empty.")
         
         # Add any other custom validation logic here
@@ -36,23 +36,24 @@ class EngineerSerializer(serializers.ModelSerializer):
         """Customize the serialized output."""
         representation = super().to_representation(instance)
 
-        TipoDocumento = instance.tipo_documento
-        if TipoDocumento:
-            representation['tipo_documento'] = {
-                'id': TipoDocumento.id,
-                'tipo': TipoDocumento.tipo
+        DocumentType = instance.document_type
+        if DocumentType:
+            representation['document_type'] = {
+                'id': DocumentType.id,
+                'type': DocumentType.doc_type
             }
         else:
-            representation['tipo_documento'] = None
+            representation['document_type'] = None
 
-        Pais = instance.pais
-        if Pais:
-            representation['pais'] = {
-                'id': Pais.id,
-                'codigo': Pais.codigo,
-                'nombre': Pais.nombre
+        Country = instance.country
+        if Country:
+            representation['country'] = {
+                'id': Country.id,
+                'code': Country.country_cod,
+                'iso_code': Country.iso_code,
+                'name': Country.name
             }
         else:
-            representation['pais'] = None
+            representation['country'] = None
 
         return representation
