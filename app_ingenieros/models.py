@@ -5,19 +5,10 @@ from django.utils import timezone
 
 class SoftDeleteManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().filter(deleted_at__isnull=True)
+        return super().get_queryset()
 
 
-class BaseModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    deleted_at = models.DateTimeField(null=True, blank=True)
-
-    class Meta:
-        abstract = True
-
-
-class Member(BaseModel):
+class Member(models.Model):
     engineer = models.ForeignKey(
         'Engineer', on_delete=models.CASCADE, related_name='members')
     collegiate_type = models.ForeignKey(
@@ -35,14 +26,13 @@ class Member(BaseModel):
 
     def delete(self, using=None, keep_parents=False):
         self.status = Status.objects.get(id=1)
-        self.deleted_at = timezone.now()
         self.save()
 
     class Meta:
         db_table = 'members'
 
 
-class Engineer(BaseModel):
+class Engineer(models.Model):
     person = models.ForeignKey(
         'Person', on_delete=models.CASCADE, related_name='engineers')
     colligiate_code = models.CharField(max_length=20, unique=True)
@@ -50,7 +40,7 @@ class Engineer(BaseModel):
     class Meta:
         db_table = 'engineers'
 
-class Person(BaseModel):
+class Person(models.Model):
     paternal_surname = models.CharField(max_length=50)
     maternal_surname = models.CharField(max_length=50)
     names = models.CharField(max_length=50)
@@ -64,6 +54,19 @@ class Person(BaseModel):
 
     class Meta:
         db_table = 'persons'
+
+class DigreeAndTitle(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    diploma_date = models.DateField()
+    institution = models.CharField(max_length=100)
+    country = models.ForeignKey(
+        'Country', on_delete=models.CASCADE, related_name='degrees_and_titles')
+    engineer = models.ForeignKey(
+        'Engineer', on_delete=models.CASCADE, related_name='degrees_and_titles')
+    professional_denomination = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'degrees_and_titles'
 
 class DocumentType(models.Model):
     type = models.CharField(max_length=50, unique=True)
@@ -110,7 +113,7 @@ class DepartmentalCouncil(models.Model):
         db_table = 'departmental_councils'
 
 
-class User(BaseModel):
+class User(models.Model):
     username = models.CharField(max_length=100, unique=True)
     email = models.EmailField(max_length=100, unique=True)
     password = models.CharField(max_length=100)
@@ -126,3 +129,19 @@ class UserType(models.Model):
 
     class Meta:
         db_table = 'user_types'
+
+
+# class AuditLog(models.Model):
+#     action = models.CharField(max_length=100)
+#     model_name = models.CharField(max_length=100)
+#     field_name = models.CharField(max_length=100)
+#     object_id = models.PositiveIntegerField()
+#     old_value = models.TextField(null=True, blank=True)
+#     new_value = models.TextField(null=True, blank=True)
+#     user = models.ForeignKey(
+#         'User', on_delete=models.CASCADE, related_name='audit_logs')
+#     timestamp = models.DateTimeField(auto_now_add=True)
+
+#     class Meta:
+#         db_table = 'audit_logs'
+#         ordering = ['-timestamp']
