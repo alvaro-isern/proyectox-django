@@ -1,44 +1,55 @@
 from rest_framework import serializers
 from app_ingenieros.models import (
-    Member, Engineer, DocumentType, Country, Status,
+    Member, MemberInfo, DocumentType, Country,
     CollegiateType, DepartmentalCouncil, Chapter
 )
 
 
 class MembersSerializer(serializers.ModelSerializer):
-    names = serializers.CharField()
-    maternal_surname = serializers.CharField()
-    paternal_surname = serializers.CharField()
-    document_type = serializers.IntegerField()
-    document_number = serializers.CharField()
-    email = serializers.EmailField()
-    country_code = serializers.IntegerField()
-    cellphone = serializers.CharField()
-
-    # Campos del colegiado
-    status = serializers.IntegerField(read_only=True)
-    chapter = serializers.IntegerField()
-    departmental_council = serializers.IntegerField()
-    collegiate_code = serializers.CharField()
-    collegiate_type = serializers.IntegerField()
+    """Serializador para el modelo Member."""
+    names = serializers.CharField(required=True)
+    paternal_surname = serializers.CharField(required=True)
+    maternal_surname = serializers.CharField(required=True)
+    collegiate_code = serializers.CharField(required=True)
+    chapter = serializers.IntegerField(required=True)
+    departmental_council = serializers.IntegerField(required=True)
+    collegiate_type = serializers.IntegerField(required=True)
+    document_type = serializers.IntegerField(required=True)
+    document_number = serializers.CharField(required=True)
+    email = serializers.EmailField(required=True)
+    country_code = serializers.IntegerField(required=True)
+    cellphone = serializers.CharField(required=True)
+    photo = serializers.ImageField(required=False)
+    birth_date = serializers.DateField(required=False)
+    address = serializers.CharField(required=False)
+    username = serializers.CharField(required=False)
+    password = serializers.CharField(required=False, write_only=True)
+    user_email = serializers.EmailField(required=False)
+    status = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Member
         fields = [
             'id',
             'status',
-            'names',
+            'collegiate_code',
             'paternal_surname',
             'maternal_surname',
-            'collegiate_code',
-            'chapter',
-            'departmental_council',
-            'collegiate_type',
+            'names',
             'document_type',
             'document_number',
             'email',
             'country_code',
-            'cellphone'
+            'cellphone',
+            'chapter',
+            'departmental_council',
+            'collegiate_type',
+            'photo',
+            'birth_date',
+            'address',
+            'username',
+            'password',
+            'user_email'
         ]
         read_only_fields = ['id']
 
@@ -71,43 +82,38 @@ class MembersSerializer(serializers.ModelSerializer):
                 error_message
             )
         return result
-
-    def _get_engineer_data(self, validated_data, related_objects):
-        """Prepara los datos del ingeniero"""
+    
+    def _get_person_data(self, validated_data):
+        """Prepara los datos de la persona"""
         return {
-            'documents_types': related_objects['document_type'],
-            'countries': related_objects['country_code'],
             'paternal_surname': validated_data.pop('paternal_surname'),
             'maternal_surname': validated_data.pop('maternal_surname'),
             'names': validated_data.pop('names'),
+            'document_type': validated_data.pop('document_type'),
+            'photo': validated_data.pop('photo', None),
+            'birth_date': validated_data.pop('birth_date', None),
+            'address': validated_data.pop('address', None),
             'doc_number': validated_data.pop('document_number'),
-            'email': validated_data.pop('email'),
-            'cellphone': validated_data.pop('cellphone'),
+            'email': validated_data.pop('email', None),
+            'country_code': validated_data.pop('country_code'),
+            'cellphone': validated_data.pop('cellphone', None),
         }
 
     def create(self, validated_data):
         # Obtener y validar objetos relacionados
         related_objects = self._get_related_objects(validated_data)
 
-        # Obtener estado active
-        try:
-            active = Status.objects.get(id=2)
-        except Status.DoesNotExist:
-            raise serializers.ValidationError(
-                {"estado_activo": "El estado no existe en la base de datos."}
-            )
-
         # Crear o actualizar ingeniero
-        engineer_data = self._get_engineer_data(
+        member_data = self._get_member_data(
             validated_data, related_objects)
-        engineer, _ = Engineer.objects.update_or_create(
-            numero_documento=engineer_data['doc_number'],
-            defaults=engineer_data
+        member, _ = MemberInfo.objects.update_or_create(
+            numero_documento=member_data['doc_number'],
+            defaults=member_data
         )
 
         # Crear colegiado
         return Member.objects.create(
-            engineer=engineer,
+            member=member,
             collegiate_code=validated_data.pop('collegiate_code'),
             chapter=related_objects['chapter'],
             collegiate_type=related_objects['collegiate_type'],
@@ -117,28 +123,28 @@ class MembersSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         """Representación personalizada del objeto para el formulario"""
-        engineer = instance.engineer
+        member = instance.member
         return {
             'id': instance.id,
             'status': getattr(instance.active, 'id', None),
             'collegiate_code': instance.collegiate_code,
-            'paternal_surname': engineer.paternal_surname,
-            'maternal_surname': engineer.maternal_surname,
-            'names': engineer.names,
-            'document_type': getattr(engineer.document_type, 'id', None),
-            'document_number': engineer.doc_number,
-            'email': engineer.email,
-            'country_code': getattr(engineer.country, 'id', None),
-            'cellphone': engineer.cellphone,
+            'paternal_surname': member.paternal_surname,
+            'maternal_surname': member.maternal_surname,
+            'names': member.names,
+            'document_type': getattr(member.document_type, 'id', None),
+            'document_number': member.doc_number,
+            'email': member.email,
+            'country_code': getattr(member.country, 'id', None),
+            'cellphone': member.cellphone,
             'chapter': getattr(instance.chapter, 'id', None),
             'departmental_council': getattr(instance.departmental_council, 'id', None),
             'colligaite_type': getattr(instance.colligaite_type, 'id', None)
         }
 
     def update(self, instance, validated_data):
-        # Actualizar datos del engineer
-        engineer_data = {}
-        engineer_fields = {
+        # Actualizar datos del member
+        member_data = {}
+        member_fields = {
             'document_type': (DocumentType, "Tipo de documento no válido."),
             'country_code': (Country, "País no válido."),
             'paternal_surname': None,
@@ -149,21 +155,21 @@ class MembersSerializer(serializers.ModelSerializer):
             'cellphone': None
         }
 
-        for field, validation in engineer_fields.items():
+        for field, validation in member_fields.items():
             if field in validated_data:
                 if validation:  # Si hay validación definida
                     model_class, error_message = validation
                     value = self.validate_required_field(
                         field, validated_data.pop(field), model_class, error_message)
-                    engineer_data[field if field !=
+                    member_data[field if field !=
                                   'codigo_pais' else 'pais'] = value
                 else:  # Si no hay validación, usar el valor directamente
-                    engineer_data[field] = validated_data.pop(field)
+                    member_data[field] = validated_data.pop(field)
 
-        if engineer_data:
-            for key, value in engineer_data.items():
-                setattr(instance.engineer, key, value)
-            instance.engineer.save()
+        if member_data:
+            for key, value in member_data.items():
+                setattr(instance.member, key, value)
+            instance.member.save()
 
         # Actualizar campos del colegiado
         member_fields = {

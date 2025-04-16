@@ -19,12 +19,6 @@ class PaymentMethod(models.Model):
 
 
 class PaymentFee(models.Model):
-    member = models.ForeignKey(
-        Member,
-        on_delete=models.CASCADE,
-        related_name='payment_fees',
-        verbose_name="Member",
-    )
     due_date = models.DateField(
         verbose_name="Due Date",
     )

@@ -1,6 +1,6 @@
-# from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions
 from rest_framework import viewsets
-from app_ingenieros.models import Member, Engineer, DocumentType
+from app_ingenieros.models import Member, Person, DocumentType
 from app_ingenieros.serializers.members import MembersSerializer
 from app_ingenieros.serializers.engineers import EngineerSerializer
 from app_ingenieros.serializers.document_type import DocumentTypeSerializer
@@ -13,7 +13,7 @@ class MembersViewSet(viewsets.ModelViewSet):
 
 
 class EngineersViewSet(viewsets.ModelViewSet):
-    queryset = Engineer.objects.all()
+    queryset = Person.objects.all()
     serializer_class = EngineerSerializer
     ordering_fields = '__all__'
     ordering = ['-created_at']
