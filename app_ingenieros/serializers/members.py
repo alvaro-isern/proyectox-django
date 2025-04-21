@@ -1,13 +1,14 @@
 from rest_framework import serializers
 from app_ingenieros.models import (
     Member, MemberInfo, DocumentType, Country,
-    CollegiateType, DepartmentalCouncil, Chapter
+    CollegiateType, DepartmentalCouncil, Chapter, Person
 )
+from django.contrib.auth.models import User
 
 
 class MembersSerializer(serializers.ModelSerializer):
     """Serializador para el modelo Member."""
-    # person atributes
+    # person attributes
     names = serializers.CharField(required=True)
     paternal_surname = serializers.CharField(required=True)
     maternal_surname = serializers.CharField(required=True)
@@ -20,23 +21,18 @@ class MembersSerializer(serializers.ModelSerializer):
     document_type = serializers.IntegerField(required=True)
     country_code = serializers.IntegerField(required=True)
 
-    # user atributes
+    # user attributes
     username = serializers.CharField(required=True)
-    password = serializers.CharField(required=True)
+    password = serializers.CharField(required=True, write_only=True)
 
-    # member atributes
+    # member attributes
     collegiate_code = serializers.CharField(required=True)
+    status = serializers.BooleanField(read_only=True)
 
-    # member info atributes
+    # member info attributes
     chapter = serializers.IntegerField(required=True)
     departmental_council = serializers.IntegerField(required=True)
     collegiate_type = serializers.IntegerField(required=True)
-    status = serializers.BooleanField(read_only=True)
-    
-
-    
-    
-    
 
     class Meta:
         model = Member
@@ -58,7 +54,6 @@ class MembersSerializer(serializers.ModelSerializer):
             'chapter',
             'departmental_council',
             'collegiate_type',
-            'user_email',
             'username',
             'password',
         ]
@@ -94,115 +89,156 @@ class MembersSerializer(serializers.ModelSerializer):
             )
         return result
 
-    def _get_person_data(self, validated_data):
-        """Prepara los datos de la persona"""
-        return {
-            'paternal_surname': validated_data.pop('paternal_surname'),
-            'maternal_surname': validated_data.pop('maternal_surname'),
-            'names': validated_data.pop('names'),
-            'document_type': validated_data.pop('document_type'),
-            'photo': validated_data.pop('photo', None),
-            'birth_date': validated_data.pop('birth_date', None),
-            'address': validated_data.pop('address', None),
-            'doc_number': validated_data.pop('document_number'),
-            'email': validated_data.pop('email', None),
-            'country_code': validated_data.pop('country_code'),
-            'cellphone': validated_data.pop('cellphone', None),
-            'username': validated_data.pop('username'),
-            'password': validated_data.pop('password'),
-        }
-
     def create(self, validated_data):
         # Obtener y validar objetos relacionados
         related_objects = self._get_related_objects(validated_data)
 
-        # Crear o actualizar ingeniero
-        member_data = self._get_member_data(
-            validated_data, related_objects)
-        member, _ = MemberInfo.objects.update_or_create(
-            numero_documento=member_data['doc_number'],
-            defaults=member_data
+        # Crear usuario
+        user = User.objects.create_user(
+            username=validated_data.pop('username'),
+            email=validated_data.pop('email'),
+            password=validated_data.pop('password')
         )
 
-        # Crear colegiado
-        return Member.objects.create(
-            member=member,
-            collegiate_code=validated_data.pop('collegiate_code'),
-            chapter=related_objects['chapter'],
-            collegiate_type=related_objects['collegiate_type'],
-            departmental_council=related_objects['departmental_council'],
-            status=active,
+        # Crear persona
+        person = Person.objects.create(
+            paternal_surname=validated_data.pop('paternal_surname'),
+            maternal_surname=validated_data.pop('maternal_surname'),
+            names=validated_data.pop('names'),
+            document_type=related_objects['document_type'],
+            doc_number=validated_data.pop('document_number'),
+            email=user.email,
+            country=related_objects['country_code'],
+            cellphone=validated_data.pop('cellphone'),
+            address=validated_data.pop('address', None),
+            birth_date=validated_data.pop('birth_date', None),
+            photo=validated_data.pop('photo', None),
+            user=user
         )
+
+        # Crear miembro
+        member = Member.objects.create(
+            person=person,
+            colligiate_code=validated_data.pop('collegiate_code'),
+            status=True
+        )
+
+        # Crear información del miembro
+        MemberInfo.objects.create(
+            member=member,
+            collegiate_type=related_objects['collegiate_type'],
+            dept_council=related_objects['departmental_council'],
+            chapter=related_objects['chapter']
+        )
+
+        return member
 
     def to_representation(self, instance):
         """Representación personalizada del objeto para el formulario"""
-        member = instance.member
+        person = instance.person
+        member_info = instance.member_info.first()
+        
         return {
             'id': instance.id,
-            'status': getattr(instance.active, 'id', None),
-            'collegiate_code': instance.collegiate_code,
-            'paternal_surname': member.paternal_surname,
-            'maternal_surname': member.maternal_surname,
-            'names': member.names,
-            'document_type': getattr(member.document_type, 'id', None),
-            'document_number': member.doc_number,
-            'email': member.email,
-            'country_code': getattr(member.country, 'id', None),
-            'cellphone': member.cellphone,
-            'chapter': getattr(instance.chapter, 'id', None),
-            'departmental_council': getattr(instance.departmental_council, 'id', None),
-            'colligaite_type': getattr(instance.colligaite_type, 'id', None)
+            'status': instance.status,
+            'collegiate_code': instance.colligiate_code,
+            'paternal_surname': person.paternal_surname,
+            'maternal_surname': person.maternal_surname,
+            'names': person.names,
+            'document_type': getattr(person.document_type, 'id', None),
+            'document_number': person.doc_number,
+            'email': person.email,
+            'country_code': getattr(person.country, 'id', None),
+            'cellphone': person.cellphone,
+            'photo': person.photo.url if person.photo else None,
+            'birth_date': person.birth_date,
+            'address': person.address,
+            'chapter': getattr(member_info.chapter, 'id', None) if member_info else None,
+            'departmental_council': getattr(member_info.dept_council, 'id', None) if member_info else None,
+            'collegiate_type': getattr(member_info.collegiate_type, 'id', None) if member_info else None,
+            'username': person.user.username
         }
 
     def update(self, instance, validated_data):
-        # Actualizar datos del member
-        member_data = {}
-        member_fields = {
-            'document_type': (DocumentType, "Tipo de documento no válido."),
-            'country_code': (Country, "País no válido."),
-            'paternal_surname': None,
-            'maternal_surname': None,
-            'names': None,
-            'document_number': None,
-            'email': None,
-            'cellphone': None
+        # Actualizar datos del usuario
+        if 'username' in validated_data or 'email' in validated_data:
+            user = instance.person.user
+            if 'username' in validated_data:
+                user.username = validated_data.pop('username')
+            if 'email' in validated_data:
+                user.email = validated_data.pop('email')
+            if 'password' in validated_data:
+                user.set_password(validated_data.pop('password'))
+            user.save()
+
+        # Actualizar datos de la persona
+        person = instance.person
+        person_fields = {
+            'paternal_surname': 'paternal_surname',
+            'maternal_surname': 'maternal_surname',
+            'names': 'names',
+            'document_number': 'doc_number',
+            'cellphone': 'cellphone',
+            'address': 'address',
+            'birth_date': 'birth_date',
+            'photo': 'photo'
         }
 
-        for field, validation in member_fields.items():
+        for field, person_field in person_fields.items():
             if field in validated_data:
-                if validation:  # Si hay validación definida
-                    model_class, error_message = validation
-                    value = self.validate_required_field(
-                        field, validated_data.pop(field), model_class, error_message)
-                    member_data[field if field !=
-                                'codigo_pais' else 'pais'] = value
-                else:  # Si no hay validación, usar el valor directamente
-                    member_data[field] = validated_data.pop(field)
+                setattr(person, person_field, validated_data.pop(field))
 
-        if member_data:
-            for key, value in member_data.items():
-                setattr(instance.member, key, value)
-            instance.member.save()
+        # Actualizar relaciones de la persona
+        if 'document_type' in validated_data:
+            person.document_type = self.validate_required_field(
+                'document_type',
+                validated_data.pop('document_type'),
+                DocumentType,
+                "Tipo de documento no válido."
+            )
+        if 'country_code' in validated_data:
+            person.country = self.validate_required_field(
+                'country_code',
+                validated_data.pop('country_code'),
+                Country,
+                "País no válido."
+            )
 
-        # Actualizar campos del colegiado
-        member_fields = {
-            'chapter': (Chapter, "Capítulo no válido."),
-            'collegiate_type': (CollegiateType, "Tipo de colegiado no válido."),
-            'departmental_council': (DepartmentalCouncil, "Consejo departamental no válido."),
-            'status': (Status, "Estado no válido.")
-        }
+        person.save()
 
-        for field, (model_class, error_message) in member_fields.items():
-            if field in validated_data:
-                value = self.validate_required_field(
-                    field,
-                    validated_data.pop(field),
-                    model_class,
-                    error_message
-                )
-                setattr(instance, field, value)
-
+        # Actualizar datos del miembro
+        if 'collegiate_code' in validated_data:
+            instance.colligiate_code = validated_data.pop('collegiate_code')
+        if 'status' in validated_data:
+            instance.status = validated_data.pop('status')
         instance.save()
+
+        # Actualizar información del miembro
+        member_info = instance.member_info.first()
+        if member_info:
+            if 'chapter' in validated_data:
+                member_info.chapter = self.validate_required_field(
+                    'chapter',
+                    validated_data.pop('chapter'),
+                    Chapter,
+                    "Capítulo no válido."
+                )
+            if 'departmental_council' in validated_data:
+                member_info.dept_council = self.validate_required_field(
+                    'departmental_council',
+                    validated_data.pop('departmental_council'),
+                    DepartmentalCouncil,
+                    "Consejo departamental no válido."
+                )
+            if 'collegiate_type' in validated_data:
+                member_info.collegiate_type = self.validate_required_field(
+                    'collegiate_type',
+                    validated_data.pop('collegiate_type'),
+                    CollegiateType,
+                    "Tipo de colegiado no válido."
+                )
+            member_info.save()
+
         return instance
 
     def destroy(self, instance):

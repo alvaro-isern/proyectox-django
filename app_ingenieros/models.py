@@ -54,7 +54,7 @@ class Person(models.Model):
         'Country', on_delete=models.CASCADE, related_name='persons')
     cellphone = models.CharField(
         max_length=15, unique=True, null=True, blank=True)
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
         db_table = 'persons'
