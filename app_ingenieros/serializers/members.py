@@ -7,25 +7,36 @@ from app_ingenieros.models import (
 
 class MembersSerializer(serializers.ModelSerializer):
     """Serializador para el modelo Member."""
+    # person atributes
     names = serializers.CharField(required=True)
     paternal_surname = serializers.CharField(required=True)
     maternal_surname = serializers.CharField(required=True)
+    document_number = serializers.CharField(required=True)
+    email = serializers.EmailField(required=True)
+    cellphone = serializers.CharField(required=True)
+    address = serializers.CharField(required=False)
+    birth_date = serializers.DateField(required=False)
+    photo = serializers.ImageField(required=False)
+    document_type = serializers.IntegerField(required=True)
+    country_code = serializers.IntegerField(required=True)
+
+    # user atributes
+    username = serializers.CharField(required=True)
+    password = serializers.CharField(required=True)
+
+    # member atributes
     collegiate_code = serializers.CharField(required=True)
+
+    # member info atributes
     chapter = serializers.IntegerField(required=True)
     departmental_council = serializers.IntegerField(required=True)
     collegiate_type = serializers.IntegerField(required=True)
-    document_type = serializers.IntegerField(required=True)
-    document_number = serializers.CharField(required=True)
-    email = serializers.EmailField(required=True)
-    country_code = serializers.IntegerField(required=True)
-    cellphone = serializers.CharField(required=True)
-    photo = serializers.ImageField(required=False)
-    birth_date = serializers.DateField(required=False)
-    address = serializers.CharField(required=False)
-    username = serializers.CharField(required=False)
-    password = serializers.CharField(required=False, write_only=True)
-    user_email = serializers.EmailField(required=False)
     status = serializers.BooleanField(read_only=True)
+    
+
+    
+    
+    
 
     class Meta:
         model = Member
@@ -38,18 +49,18 @@ class MembersSerializer(serializers.ModelSerializer):
             'names',
             'document_type',
             'document_number',
-            'email',
             'country_code',
+            'email',
             'cellphone',
-            'chapter',
-            'departmental_council',
-            'collegiate_type',
             'photo',
             'birth_date',
             'address',
+            'chapter',
+            'departmental_council',
+            'collegiate_type',
+            'user_email',
             'username',
             'password',
-            'user_email'
         ]
         read_only_fields = ['id']
 
@@ -82,7 +93,7 @@ class MembersSerializer(serializers.ModelSerializer):
                 error_message
             )
         return result
-    
+
     def _get_person_data(self, validated_data):
         """Prepara los datos de la persona"""
         return {
@@ -97,6 +108,8 @@ class MembersSerializer(serializers.ModelSerializer):
             'email': validated_data.pop('email', None),
             'country_code': validated_data.pop('country_code'),
             'cellphone': validated_data.pop('cellphone', None),
+            'username': validated_data.pop('username'),
+            'password': validated_data.pop('password'),
         }
 
     def create(self, validated_data):
@@ -162,7 +175,7 @@ class MembersSerializer(serializers.ModelSerializer):
                     value = self.validate_required_field(
                         field, validated_data.pop(field), model_class, error_message)
                     member_data[field if field !=
-                                  'codigo_pais' else 'pais'] = value
+                                'codigo_pais' else 'pais'] = value
                 else:  # Si no hay validación, usar el valor directamente
                     member_data[field] = validated_data.pop(field)
 
