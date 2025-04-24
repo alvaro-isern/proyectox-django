@@ -1,5 +1,5 @@
 from django.db import models
-from app_ingenieros.models import Member
+from app_ingenieros.models import Engineer
 
 
 class PaymentMethod(models.Model):
@@ -35,7 +35,7 @@ class PaymentFee(models.Model):
     )
 
     def __str__(self):
-        return f"Member: {self.member} - Expiration Date: {self.due_date}"
+        return f"Engineer: {self.member} - Expiration Date: {self.due_date}"
 
     class Meta:
         db_table = 'payment_fees'
@@ -46,10 +46,10 @@ class PaymentFee(models.Model):
 
 class Payment(models.Model):
     member = models.ForeignKey(
-        Member,
+        Engineer,
         on_delete=models.CASCADE,
         related_name='payments',
-        verbose_name="Member",
+        verbose_name="Engineer",
     )
     payment_date = models.DateField(
         verbose_name="Payment Date",
