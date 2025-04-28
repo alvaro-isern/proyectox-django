@@ -11,3 +11,6 @@ __pycache__/
 # Default database file for SQLite
 # This file is used to store the SQLite database for the application.
 /db.sqlite3
+
+# jbrains idea files
+.idea/

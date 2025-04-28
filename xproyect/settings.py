@@ -41,8 +41,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
-    'app_ingenieros',
-    'app_pagos',
+    'app_engineers',
+    'app_payments',
+    'app_events',
+    'app_faults_procedures',
 ]
 
 MIDDLEWARE = [
@@ -148,4 +150,4 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# AUTH_USER_MODEL = 'app_ingenieros.UserType'
+# AUTH_USER_MODEL = 'app_engineers.UserType'

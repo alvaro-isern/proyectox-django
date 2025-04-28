@@ -1,5 +1,3 @@
-from tkinter.constants import CASCADE
-
 from django.db import models
 from django.contrib.auth.models import User
 # from django.utils import timezone
@@ -17,7 +15,7 @@ class Engineer(models.Model):
     status = models.BooleanField(default=True)
     training = models.ForeignKey('AcademicTraining', on_delete=models.CASCADE, related_name='engineers')
     registration_date = models.DateField()
-    member_type = models.charField(max_length=20, choices=[
+    member_type = models.CharField(max_length=20, choices=[
         (1, 'ORDINARIO'),
         (2, 'VITALICIO'),
     ])
@@ -132,7 +130,6 @@ class AcademicTraining(models.Model):
     class Meta:
         db_table = 'trainings'
 
-
 class TrainingType(models.Model):
     name = models.CharField(max_length=50, unique=True, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
@@ -175,7 +172,7 @@ class Chapter(models.Model):
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(null=True, blank=True)
     creation_date = models.DateField(null=True, blank=True)
-    departmental_council = models.ForeignKey('DepartmentalCouncil', on_delete=CASCADE, related_name='chapters')
+    departmental_council = models.ForeignKey('DepartmentalCouncil', on_delete=models.CASCADE, related_name='chapters')
     status = models.BooleanField(default=True)
 
     class Meta:
