@@ -35,21 +35,12 @@ class PaymentFee(models.Model):
         verbose_name_plural = "Payment Fees"
 
 class Payment(models.Model):
-    engineer = models.ForeignKey(
-        Engineer,
+    payment_concept = models.ForeignKey(
+        'PaymentConcept',
         on_delete=models.CASCADE,
-        related_name='payments',
-        verbose_name="Engineer",
-        null=True,
-        blank=True,
+        related_name='%(class)s_payments',
+        verbose_name="Payment Concept",
     )
-    event_inscription = models.ForeignKey(EventInscription, on_delete=models.CASCADE, related_name='payments', verbose_name="Event Inscription", null=True, blank=True)
-    sanction = models.ForeignKey(Sanction, on_delete=models.CASCADE, related_name='payments', verbose_name="Santion", null=True, blank=True)
-    payment_concept = models.CharField(max_length=50, verbose_name="Payment Concept", choices=[
-        (1, 'INSCRIPCIÓN A EVENTO'),
-        (2, 'SANCIÓN'),
-        (3, 'MENSUALIDAD'),
-    ])
     payment_date = models.DateField(
         verbose_name="Payment Date",
     )
@@ -66,27 +57,79 @@ class Payment(models.Model):
         ]
     )
     operation_number = models.CharField(max_length=50, verbose_name="Operation Number", null=True, blank=True)
-    payment_fee = models.ForeignKey(
-        'PaymentFee',
-        on_delete=models.CASCADE,
-        related_name='payments',
-        verbose_name="Payment Fee",
-        null=True,
-        blank=True,
-    )
     status = models.CharField(max_length=20, verbose_name="Status", choices=[
         (1, 'PAGADO'),
         (2, 'VENCIDO'),
         (3, 'PENDIENTE'),
         (4, 'CANCELADO'),
     ], default=3)
-
-    departament_council = models.ForeignKey(DepartmentalCouncil, on_delete=models.CASCADE, related_name='payments', verbose_name="Departmental Council")
+    departament_council = models.ForeignKey(
+        DepartmentalCouncil,
+        on_delete=models.CASCADE,
+        related_name='%(class)s_payments',
+        verbose_name="Departmental Council",
+    )
 
     class Meta:
         db_table = 'payments'
         verbose_name = "Payment"
         verbose_name_plural = "Payments"
+        abstract = True
+
+class PaymentConcept(models.Model):
+    code = models.CharField(max_length=50, verbose_name="Payment Concept Code", unique=True)
+    name = models.CharField(max_length=50, verbose_name="Payment Concept Name")
+    description = models.TextField(verbose_name="Description", null=True, blank=True)
+
+    class Meta:
+        db_table = 'payment_concepts'
+        verbose_name = "Payment Concept"
+        verbose_name_plural = "Payment Concepts"
+
+class EventPayment(Payment):
+    event_inscription = models.ForeignKey(
+        EventInscription,
+        on_delete=models.CASCADE,
+        related_name='payments',
+        verbose_name="Event Inscription",
+    )
+
+    class Meta:
+        db_table = 'event_payments'
+        verbose_name = "Event Payment"
+        verbose_name_plural = "Event Payments"
+
+class SanctionPayment(Payment):
+    sanction = models.ForeignKey(
+        Sanction,
+        on_delete=models.CASCADE,
+        related_name='payments',
+        verbose_name="Sanction",
+    )
+
+    class Meta:
+        db_table = 'sanction_payments'
+        verbose_name = "Sanction Payment"
+        verbose_name_plural = "Sanction Payments"
+
+class QuotaPayment(Payment):
+    engineer = models.ForeignKey(
+        Engineer,
+        on_delete=models.CASCADE,
+        related_name='payments',
+        verbose_name="Engineer",
+    )
+    payment_fee = models.ForeignKey(
+        "PaymentFee",
+        on_delete=models.CASCADE,
+        related_name='payments',
+        verbose_name="Payment Fee",
+    )
+
+    class Meta:
+        db_table = 'quota_payments'
+        verbose_name = "Quota Payment"
+        verbose_name_plural = "Quota Payments"
 
 
 # class QuotaStatus(models.Model):

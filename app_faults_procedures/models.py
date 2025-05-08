@@ -5,7 +5,6 @@ from app_events.models import Period
 # Create your models here.
 class Sanction(models.Model):
     case = models.ForeignKey('Case', on_delete=models.CASCADE, related_name='sanctions', verbose_name="Case")
-    engineer = models.ForeignKey(Engineer, on_delete=models.CASCADE, related_name='sanctions', verbose_name="Engineer")
     sanction_type = models.CharField(max_length=50, verbose_name="Sanction Type", choices=[
         (1, 'FALTA ÉTICA'),
         (2, 'FALTA CONTRA LA INSTITUCION'),

@@ -4,7 +4,7 @@ from app_engineers.models import Person, Engineer, DepartmentalCouncil
 # Create your models here.
 class Event(models.Model):
     event_type = models.ForeignKey('EventType', on_delete=models.CASCADE, related_name='events', verbose_name="Event Type")
-    entity = models.ForeignKey('Entity', on_delete=models.CASCADE, related_name='events', verbose_name="Entity")
+    room_reservation = models.ForeignKey('RoomReservation', on_delete=models.CASCADE, related_name='events', verbose_name="Event Reservation")
     title = models.CharField(max_length=100, verbose_name="Event Title")
     description = models.TextField(verbose_name="Event Description", null=True, blank=True)
     start_date = models.DateField(verbose_name="Start Date")
@@ -14,7 +14,6 @@ class Event(models.Model):
         (2, 'VIRTUAL'),
         (3, 'HÍBRIDO'),
     ])
-    room = models.ForeignKey('Room', on_delete=models.CASCADE, related_name='events', verbose_name="Room")
     fee = models.ForeignKey('Fee', on_delete=models.CASCADE, related_name='events', verbose_name="Fee")
 
     class Meta:
@@ -40,6 +39,7 @@ class Entity(models.Model):
         (2, 'PRIVADA'),
     ])
     ruc = models.CharField(max_length=20, verbose_name="RUC", null=True, blank=True)
+    person_representative = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='entities', verbose_name="Representative", null=True, blank=True)
     address = models.CharField(max_length=200, verbose_name="Address", null=True, blank=True)
     phone = models.CharField(max_length=20, verbose_name="Phone", null=True, blank=True)
     email = models.EmailField(verbose_name="Email", null=True, blank=True)
@@ -76,6 +76,25 @@ class Room(models.Model):
         verbose_name = "Room"
         verbose_name_plural = "Rooms"
 
+class RoomReservation(models.Model):
+    entity = models.ForeignKey('Entity', on_delete=models.CASCADE, related_name='room_reservations', verbose_name="Entity", null=True, blank=True)
+    natural_person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='room_reservations', verbose_name="Natural Person", null=True, blank=True)
+    room = models.ForeignKey('Room', on_delete=models.CASCADE, related_name='reservations', verbose_name="Room")
+    start_date = models.DateField(verbose_name="Start Date")
+    end_date = models.DateField(verbose_name="End Date")
+    reason = models.CharField(max_length=100, verbose_name="Reason", null=True, blank=True)
+    status = models.CharField(max_length=20, verbose_name="Status", choices=[
+        (1, 'RESERVADO'),
+        (2, 'CANCELADO'),
+        (3, 'FINALIZADO'),
+    ])
+
+
+    class Meta:
+        db_table = 'room_reservations'
+        verbose_name = "Room Reservation"
+        verbose_name_plural = "Room Reservations"
+
 class Fee(models.Model):
     participant_type = models.CharField(max_length=50, verbose_name="Participant Type", choices=[
         (1, 'EXTERNO'),
@@ -101,6 +120,10 @@ class EventInscription(models.Model):
     inscription_date = models.DateField(verbose_name="Inscription Date")
     payment_required = models.BooleanField(default=True, verbose_name="Payment Required")
     inscription_cost = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Inscription Cost", null=True, blank=True)
+    partipant_type = models.CharField(max_length=50, verbose_name="Participant Type", choices=[
+        (1, 'EXTERNO'),
+        (2, 'INTERNO'),
+    ])
 
     class Meta:
         db_table = 'event_inscriptions'
@@ -110,11 +133,6 @@ class EventInscription(models.Model):
 
 class Participant(models.Model):
     person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='participants', verbose_name="Person")
-    engineer = models.ForeignKey(Engineer, on_delete=models.CASCADE, related_name='participants', verbose_name="Engineer", null=True, blank=True)
-    partipant_type = models.CharField(max_length=50, verbose_name="Participant Type", choices=[
-        (1, 'EXTERNO'),
-        (2, 'INTERNO'),
-    ])
     study_center_type = models.CharField(max_length=50, verbose_name="Study Center Type", choices=[
         (1, 'UNIVERSIDAD'),
         (2, 'INSTITUTO'),
@@ -131,8 +149,8 @@ class Participant(models.Model):
         verbose_name_plural = "Participants"
 
 class CertificateSignature(models.Model):
-    executive = models.ForeignKey('Executive', on_delete=models.CASCADE, related_name='signatures', verbose_name="Executive")
-    position = models.CharField(max_length=50, verbose_name="Position", null=True, blank=True)
+    executive = models.ForeignKey('Executive', on_delete=models.CASCADE, related_name='signatures', verbose_name="Executive", null=True, blank=True)
+    entity = models.ForeignKey('Entity', on_delete=models.CASCADE, related_name='signatures', verbose_name="Entity", null=True, blank=True)
     full_name = models.CharField(max_length=100, verbose_name="Full Name", null=True, blank=True)
     title = models.CharField(max_length=100, verbose_name="Title", null=True, blank=True)
     signature_image = models.ImageField(upload_to='signatures/', verbose_name="Signature Image", null=True, blank=True)
@@ -143,20 +161,8 @@ class CertificateSignature(models.Model):
         verbose_name = "Certificate Signature"
         verbose_name_plural = "Certificate Signatures"
 
-class ConfigSignature(models.Model):
-    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='config_signatures', verbose_name="Event")
-    main_signature = models.ForeignKey('CertificateSignature', on_delete=models.CASCADE, related_name='main_signatures', verbose_name="Main Signature")
-    secondary_signature = models.ForeignKey('CertificateSignature', on_delete=models.CASCADE, related_name='secondary_signatures', verbose_name="Secondary Signature")
-    additional_signature = models.ForeignKey('CertificateSignature', on_delete=models.CASCADE, related_name='third_signatures', verbose_name="Third Signature", null=True, blank=True)
-
-    class Meta:
-        db_table = 'config_signatures'
-        verbose_name = "Config Signature"
-        verbose_name_plural = "Config Signatures"
-
 class EventCertificate(models.Model):
-    event_asistent = models.ForeignKey('EventAsistent', on_delete=models.CASCADE, related_name='certificates', verbose_name="Event Assistant", null=True, blank=True)
-    event_speaker = models.ForeignKey('EventSpeaker', on_delete=models.CASCADE, related_name='certificates', verbose_name="Event Speaker", null=True, blank=True)
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='event_certificates', verbose_name="Event")
     code = models.CharField(max_length=50, verbose_name="Certificate Code")
     issue_date = models.DateField(verbose_name="Issue Date")
     certificate_type = models.CharField(max_length=50, verbose_name="Certificate Type", choices=[
@@ -166,7 +172,6 @@ class EventCertificate(models.Model):
         (4, 'OTROS'),
     ])
     certificate_url = models.URLField(verbose_name="Certificate URL", null=True, blank=True)
-    configuration_signature = models.ForeignKey('ConfigSignature', on_delete=models.CASCADE, related_name='certificates', verbose_name="Configuration Signature")
     certificate_text = models.TextField(verbose_name="Certificate Text", null=True, blank=True)
     certificate_template = models.CharField(max_length=50, verbose_name="Certificate Template", null=True, blank=True)
 
@@ -176,15 +181,33 @@ class EventCertificate(models.Model):
         verbose_name = "Event Certificate"
         verbose_name_plural = "Event Certificates"
 
-class EventAsistent(models.Model):
-    inscription = models.ForeignKey(EventInscription, on_delete=models.CASCADE, related_name='assistants', verbose_name="Event Inscription")
+class SignatureRole(models.Model):
+    name = models.CharField(max_length=50, verbose_name="Signature Role Name")
+
+    class Meta:
+        db_table = 'signature_roles'
+        verbose_name = "Signature Role"
+        verbose_name_plural = "Signature Roles"
+
+class EventSignature(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='event_signatures', verbose_name="Event")
+    certificate_signature = models.ForeignKey("CertificateSignature", on_delete=models.CASCADE, related_name='event_signatures', verbose_name="Signature")
+    signature_role = models.ForeignKey(SignatureRole, on_delete=models.CASCADE, related_name='event_signatures', verbose_name="Role")
+
+    class Meta:
+        db_table = 'event_signatures'
+        verbose_name = "Event Signature"
+        verbose_name_plural = "Event Signatures"
+
+class EventAttendee(models.Model):
+    participant = models.ForeignKey(Participant, on_delete=models.CASCADE, related_name='event_attendee', verbose_name="Participant")
     date = models.DateField(verbose_name="Date")
     entry_time = models.TimeField(verbose_name="Entry Time", null=True, blank=True)
     exit_time = models.TimeField(verbose_name="Exit Time", null=True, blank=True)
     observations = models.TextField(verbose_name="Observations", null=True, blank=True)
 
     class Meta:
-        db_table = 'event_assistants'
+        db_table = 'event_attendee'
         ordering = ['date']
         verbose_name = "Event Assistant"
         verbose_name_plural = "Event Assistants"
@@ -228,16 +251,11 @@ class EventSpeaker(models.Model):
         verbose_name_plural = "Event Speakers"
 
 class Executive(models.Model):
-    enfineer = models.ForeignKey(Engineer, on_delete=models.CASCADE, related_name='executives', verbose_name="Engineer")
+    engineer = models.ForeignKey(Engineer, on_delete=models.CASCADE, related_name='executives', verbose_name="Engineer")
     position = models.ForeignKey('Position', on_delete=models.CASCADE, related_name='executives', verbose_name="Position")
     period = models.ForeignKey('Period', on_delete=models.CASCADE, related_name='executives', verbose_name="Period")
     start_date = models.DateField(verbose_name="Start Date")
     end_date = models.DateField(verbose_name="End Date", null=True, blank=True)
-    type_entity = models.CharField(max_length=50, verbose_name="Entity Type", choices=[
-        (1, 'PÚBLICA'),
-        (2, 'PRIVADA'),
-    ])
-    entity = models.ForeignKey('Entity', on_delete=models.CASCADE, related_name='executives', verbose_name="Entity")
     status = models.CharField(max_length=20, verbose_name="Status", choices=[
         (1, 'ACTIVO'),
         (2, 'INACTIVO'),

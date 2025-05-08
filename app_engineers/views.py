@@ -1,15 +1,16 @@
-# from rest_framework import viewsets, permissions
-# from rest_framework import viewsets
-# from app_engineers.models import Member, DocumentType
-# from app_engineers.serializers.members import MembersSerializer
+from rest_framework import viewsets, permissions
+from rest_framework import viewsets
+from app_engineers.models import Person
+from app_engineers.serializers.person_serializer import PersonSerializer
 # from app_engineers.serializers.document_type import DocumentTypeSerializer
-#
-#
-# class MembersViewSet(viewsets.ModelViewSet):
-#     queryset = Member.objects.all()
-#     serializer_class = MembersSerializer
-#     ordering_fields = '__all__'
-#
+
+
+class PersonViewSet(viewsets.ModelViewSet):
+    queryset = Person.objects.all()
+    serializer_class = PersonSerializer
+    ordering_fields = '__all__'
+    ordering = ['-created_at']
+
 # class DocumentTypeViewSet(viewsets.ModelViewSet):
 #     queryset = DocumentType.objects.all()
 #     serializer_class = DocumentTypeSerializer

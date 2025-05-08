@@ -13,7 +13,6 @@ class Engineer(models.Model):
         'Person', on_delete=models.CASCADE, related_name='engineers')
     colligiate_code = models.CharField(max_length=20, unique=True)
     status = models.BooleanField(default=True)
-    training = models.ForeignKey('AcademicTraining', on_delete=models.CASCADE, related_name='engineers')
     registration_date = models.DateField()
     member_type = models.CharField(max_length=20, choices=[
         (1, 'ORDINARIO'),
@@ -21,7 +20,6 @@ class Engineer(models.Model):
     ])
     vitalicio_date = models.DateField(null=True, blank=True)
     departament_council = models.ForeignKey('DepartmentalCouncil', on_delete=models.CASCADE, related_name='engineers')
-    main_specialty = models.ForeignKey('Specialty', on_delete=models.CASCADE, related_name='engineers')
     objects = SoftDeleteManager()
 
     def delete(self, using=None, keep_parents=False):
@@ -44,7 +42,6 @@ class Specialty(models.Model):
 class ChapterSpecialty(models.Model):
     chapter = models.ForeignKey('Chapter', on_delete=models.CASCADE, related_name='chapter_specialties')
     specialty = models.ForeignKey('Specialty', on_delete=models.CASCADE, related_name='chapter_specialties')
-    is_main = models.BooleanField(default=False)
     incorporation_date = models.DateField(null=True, blank=True)
 
     class Meta:
@@ -52,8 +49,7 @@ class ChapterSpecialty(models.Model):
 
 class IngineerSpecialty(models.Model):
     engineer = models.ForeignKey('Engineer', on_delete=models.CASCADE, related_name='engineer_specialties')
-    specialty = models.ForeignKey('Specialty', on_delete=models.CASCADE, related_name='engineer_specialties')
-    chapter = models.ForeignKey('Chapter', on_delete=models.CASCADE, related_name='engineer_specialties')
+    specialty_charter = models.ForeignKey('ChapterSpecialty', on_delete=models.CASCADE, related_name='engineer_specialties')
     registration_date = models.DateField(null=True, blank=True)
     is_main = models.BooleanField(default=False, null=True, blank=True)
     certificate = models.FileField(upload_to='certificates/', null=True, blank=True)
@@ -62,7 +58,7 @@ class IngineerSpecialty(models.Model):
         db_table = 'engineers_specialties'
 
 class Person(models.Model):
-    document_type = models.CharField(max_length=50, choices=[
+    document_type = models.IntegerField(max_length=50, choices=[
         (1, 'DNI'),
         (2, 'CARNET DE EXTRANJERIA'),
         (3, 'PASAPORTE'),
@@ -73,7 +69,7 @@ class Person(models.Model):
     paternal_surname = models.CharField(max_length=100)
     maternal_surname = models.CharField(max_length=100)
     birth_date = models.DateField()
-    civil_state = models.CharField(max_length=20, null=True, blank=True, choices=[
+    civil_state = models.IntegerField(max_length=20, null=True, blank=True, choices=[
         (1, 'SOLTERO(A)'),
         (2, 'CASADO(A)'),
         (3, 'DIVORCIADO(A)'),
@@ -91,7 +87,7 @@ class Contact(models.Model):
     email = models.EmailField(max_length=100, unique=True, null=True, blank=True)
     address = models.CharField(max_length=100, null=True, blank=True)
     is_main = models.BooleanField(default=False, null=True, blank=True)
-    use = models.CharField(max_length=20, null=True, blank=True, choices=[
+    use = models.IntegerField(max_length=20, null=True, blank=True, choices=[
         (1, 'PERSONAL'),
         (2, 'LABORAL'),
         (3, 'EMERGENCIA'),
@@ -99,6 +95,27 @@ class Contact(models.Model):
 
     class Meta:
         db_table = 'contacts'
+
+class FamilyInformation(models.Model):
+    person = models.ForeignKey('Person', on_delete=models.CASCADE, related_name='family_informations')
+    person_family = models.ForeignKey('Person', on_delete=models.CASCADE, related_name='family_persons')
+    relationship = models.IntegerField(max_length=20, choices=[
+        (1, 'PADRE'),
+        (2, 'MADRE'),
+        (3, 'HERMANO(A)'),
+        (4, 'HIJO(A)'),
+        (5, 'CONYUGE'),
+        (6, 'OTRO'),
+    ])
+    is_dependent = models.BooleanField(default=False)
+    is_emergency_contact = models.BooleanField(default=False)
+    is_live = models.BooleanField(default=True)
+    death_date = models.DateField(null=True, blank=True)
+
+    cellphone = models.CharField(max_length=20)
+
+    class Meta:
+        db_table = 'family_informations'
 
 class JobExperience(models.Model):
     person = models.ForeignKey('Person', on_delete=models.CASCADE, related_name='job_experiences')
@@ -111,6 +128,21 @@ class JobExperience(models.Model):
     country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='job_experiences', null=True, blank=True)
     sector = models.CharField(max_length=100, null=True, blank=True)
     is_current_job = models.BooleanField(default=False, null=True, blank=True)
+    job_situation = models.IntegerField(max_length=20, null=True, blank=True, choices=[
+        (1, 'INDEPENDIENTE'),
+        (2, 'EMPLEADO'),
+        (3, 'DESEMPLEADO'),
+    ])
+    type_contract = models.IntegerField(max_length=20, null=True, blank=True, choices=[
+        (1, 'NOMBRADO'),
+        (2, 'CONTRATADO'),
+        (3, 'LOCADOR'),
+        (4, 'CAS'),
+        (5, 'PART-TIME'),
+        (6, 'CONTRATO TEMPORAL'),
+        (7, 'CONTRATO POR SERVICIO'),
+    ])
+
 
     class Meta:
         db_table = 'job_experiences'
@@ -136,6 +168,14 @@ class TrainingType(models.Model):
 
     class Meta:
         db_table = 'training_types'
+
+class EngineerTraining(models.Model):
+    engineer = models.ForeignKey('Engineer', on_delete=models.CASCADE, related_name='engineer_trainings')
+    training = models.ForeignKey('AcademicTraining', on_delete=models.CASCADE, related_name='engineer_trainings')
+    is_main = models.BooleanField(default=False, null=True, blank=True)
+
+    class Meta:
+        db_table = 'engineer_trainings'
 
 class Country(models.Model):
     country_cod = models.CharField(max_length=10, unique=True)
@@ -182,11 +222,8 @@ class DepartmentalCouncil(models.Model):
     name = models.CharField(max_length=100, unique=True)
     headquarters = models.CharField(max_length=100, unique=True)
     province = models.ForeignKey('Province', on_delete=models.CASCADE, related_name='departmental_councils')
+    institutional_area = models.ForeignKey('InstitutionalArea', on_delete=models.CASCADE, related_name='departmental_councils')
     address = models.CharField(max_length=100)
-    telephone1 = models.CharField(max_length=20, null=True, blank=True)
-    telephone2 = models.CharField(max_length=20, null=True, blank=True)
-    telephone3 = models.CharField(max_length=20, null=True, blank=True)
-    telephone4 = models.CharField(max_length=20, null=True, blank=True)
     email = models.EmailField(max_length=100, unique=True, null=True, blank=True)
     zona = models.CharField(max_length=100, unique=True)
     creation_date = models.DateField()
@@ -195,15 +232,22 @@ class DepartmentalCouncil(models.Model):
     class Meta:
         db_table = 'departmental_councils'
 
+class DepartmentalCouncilPhone(models.Model):
+    departamental_council = models.ForeignKey('DepartmentalCouncil', on_delete=models.CASCADE, related_name='phones')
+    phone = models.CharField(max_length=20, null=True, blank=True)
+    is_main = models.BooleanField(default=False, null=True, blank=True)
+
+    class Meta:
+        db_table = 'departmental_council_phones'
+
 class LocalCommittee(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    provice = models.ForeignKey('Province', on_delete=models.CASCADE, related_name='local_committees')
+    departamental_council = models.ForeignKey('DepartmentalCouncil', on_delete=models.CASCADE, related_name='local_committees')
     address = models.CharField(max_length=100, null=True, blank=True)
     telephone1 = models.CharField(max_length=20, null=True, blank=True)
     telephone2 = models.CharField(max_length=20, null=True, blank=True)
     email = models.EmailField(max_length=100, unique=True, null=True, blank=True)
     creation_date = models.DateField()
-    departamental_council = models.ForeignKey('DepartmentalCouncil', on_delete=models.CASCADE, related_name='local_committees')
     status = models.BooleanField(default=True)
 
     class Meta:
@@ -218,13 +262,12 @@ class InstitutionalArea(models.Model):
 
 class DecentralizedHeadquarters(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    province = models.ForeignKey('Province', on_delete=models.CASCADE, related_name='decentralized_headquarters')
+    departamental_council = models.ForeignKey('DepartmentalCouncil', on_delete=models.CASCADE, related_name='decentralized_headquarters')
     address = models.CharField(max_length=100, null=True, blank=True)
     telephone1 = models.CharField(max_length=20, null=True, blank=True)
     telephone2 = models.CharField(max_length=20, null=True, blank=True)
     email = models.EmailField(max_length=100, unique=True, null=True, blank=True)
     creation_date = models.DateField()
-    departamental_council = models.ForeignKey('DepartmentalCouncil', on_delete=models.CASCADE, related_name='decentralized_headquarters')
     status = models.BooleanField(default=True)
 
     class Meta:
