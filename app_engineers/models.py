@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 
 class SoftDeleteManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset()
+        return super().get_queryset().filter(is_active=True)
 
 class Engineer(models.Model):
     person = models.ForeignKey(
@@ -22,8 +22,12 @@ class Engineer(models.Model):
     departament_council = models.ForeignKey('DepartmentalCouncil', on_delete=models.CASCADE, related_name='engineers')
     objects = SoftDeleteManager()
 
-    def delete(self, using=None, keep_parents=False):
+    def delete(self):
         self.status = False
+        self.save()
+
+    def restore(self):
+        self.status = True
         self.save()
 
     class Meta:
@@ -77,14 +81,24 @@ class Person(models.Model):
     ])
     photo = models.ImageField(upload_to='photos/', null=True, blank=True)
     country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='persons')
+    is_active = models.BooleanField(default=True)
+    objects = SoftDeleteManager()
+
+    def delete(self):
+        self.is_active = False
+        self.save()
+
+    def restore(self):
+        self.is_active = True
+        self.save()
 
     class Meta:
         db_table = 'persons'
 
 class Contact(models.Model):
     person = models.ForeignKey('Person', on_delete=models.CASCADE, related_name='contacts')
-    cellphone = models.CharField(max_length=20, null=True, blank=True)
-    email = models.EmailField(max_length=100, unique=True, null=True, blank=True)
+    cellphone = models.CharField(max_length=20, null=True, blank=True, unique=True)
+    email = models.EmailField(max_length=100, null=True, blank=True)
     address = models.CharField(max_length=100, null=True, blank=True)
     is_main = models.BooleanField(default=False, null=True, blank=True)
     use = models.IntegerField(max_length=20, null=True, blank=True, choices=[
@@ -92,6 +106,16 @@ class Contact(models.Model):
         (2, 'LABORAL'),
         (3, 'EMERGENCIA'),
     ])
+    is_active = models.BooleanField(default=True)
+    objects = SoftDeleteManager()
+
+    def delete(self):
+        self.is_active = False
+        self.save()
+
+    def restore(self):
+        self.is_active = True
+        self.save()
 
     class Meta:
         db_table = 'contacts'

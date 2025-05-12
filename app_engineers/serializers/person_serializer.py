@@ -1,11 +1,14 @@
+from urllib.parse import urlparse
+
+# from app_engineers.services.ImageController import HybridImageField
+import requests
+from django.core.files.base import ContentFile
+from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from app_engineers.models import Person, Contact, Country
-# from app_engineers.services.ImageController import HybridImageField
-import requests
-from django.core.files.base import ContentFile
-from urllib.parse import urlparse
+from .contact_serializer import ContactSerializer
 
 
 # from django.conf import settings
@@ -17,27 +20,12 @@ class URLImageField(serializers.ImageField):
 
         return super().to_internal_value(data)
 
-class ContactSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Contact
-        fields = ['id', 'cellphone', 'email', 'address', 'use', 'is_main']
-        read_only_fields = ['id']
 
 class PersonSerializer(serializers.ModelSerializer):
     """Serializador para el modelo Person."""
-    # person attributes
-    names = serializers.CharField(required=True)
-    paternal_surname = serializers.CharField(required=True)
-    maternal_surname = serializers.CharField(required=True)
-    doc_number = serializers.CharField(required=True)
-    contact = ContactSerializer(required=False, read_only=True)
-    birth_date = serializers.DateField(required=False)
+    contact = ContactSerializer(many=True, read_only=True, source='contacts')
     civil_state = serializers.CharField(required=False, allow_blank=True)
-    photo = URLImageField(
-        required=False)
-    document_type = serializers.IntegerField(required=True)
-    country = serializers.PrimaryKeyRelatedField(
-        queryset=Country.objects.all(), required=True)
+    photo = URLImageField(required=False)
 
     # Contact fields (write_only)
     cellphone = serializers.CharField(
@@ -50,11 +38,13 @@ class PersonSerializer(serializers.ModelSerializer):
         write_only=True, required=False, allow_blank=True)
     is_main = serializers.CharField(
         write_only=True, required=False, allow_blank=True)
+    contact_id = serializers.IntegerField(write_only=True, required=False)
 
     class Meta:
         model = Person
         fields = [
             'id',
+            'is_active',
             'names',
             'paternal_surname',
             'maternal_surname',
@@ -65,13 +55,14 @@ class PersonSerializer(serializers.ModelSerializer):
             'birth_date',
             'document_type',
             'country',
+            'contact_id',
             'cellphone',
             'email',
             'address',
             'use',
-            'is_main'
+            'is_main',
         ]
-        read_only_fields = ['id']
+        read_only_fields = ['id', 'is_active', 'person']
 
     def validate_photo(self, value):
         # Si el valor ya es un archivo (ContentFile u otro), no realizar más validaciones
@@ -110,15 +101,6 @@ class PersonSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         """Incluir los datos del contacto en la respuesta."""
         representation = super().to_representation(instance)
-        try:
-            contact = instance.contacts.first()  # Obtener el primer contacto
-            if contact:
-                representation['contact'] = ContactSerializer(contact).data
-            else:
-                representation['contact'] = None
-        except Contact.DoesNotExist:
-            representation['contact'] = None
-
         # Agregar la URL completa para el campo photo
         if representation.get('photo'):
             request = self.context.get('request')
@@ -127,6 +109,12 @@ class PersonSerializer(serializers.ModelSerializer):
                     representation['photo'])
             else:
                 representation['photo'] = f"http://127.0.0.1:8000{representation['photo']}"
+        
+        # Remove person field from contacts
+        if representation.get('contact'):
+            for contact in representation['contact']:
+                contact.pop('person', None)
+                
         return representation
 
     def validate_required_field(self, field_name, field_value, model_class, error_message):
@@ -198,22 +186,73 @@ class PersonSerializer(serializers.ModelSerializer):
         if validated_data.get('photo') == "":
             validated_data['photo'] = None
 
-        person = Person.objects.create(
-            names=validated_data.pop('names'),
-            paternal_surname=validated_data.pop('paternal_surname'),
-            maternal_surname=validated_data.pop('maternal_surname'),
-            doc_number=validated_data.pop('doc_number'),
-            document_type=validated_data.pop('document_type'),
-            country=validated_data.pop('country'),
-            birth_date=validated_data.pop('birth_date', None),
-            photo=validated_data.pop('photo', None),
-            civil_state=validated_data.pop('civil_state', None),
-        )
+        with transaction.atomic():
+            person = Person.objects.create(
+                names=validated_data.pop('names'),
+                paternal_surname=validated_data.pop('paternal_surname'),
+                maternal_surname=validated_data.pop('maternal_surname'),
+                doc_number=validated_data.pop('doc_number'),
+                document_type=validated_data.pop('document_type'),
+                country=validated_data.pop('country'),
+                birth_date=validated_data.pop('birth_date', None),
+                photo=validated_data.pop('photo', None),
+                civil_state=validated_data.pop('civil_state', None),
+            )
 
-        # Crear el contacto y asociarlo con la persona
-        contact = Contact.objects.create(
-            person=person,
-            **contact_data
-        )
+            try:
+                Contact.objects.create(
+                    person=person,
+                    **contact_data
+                )
+            except Exception as e:
+                raise serializers.ValidationError(
+                    {"contact": f"Error al crear el contacto: {str(e)}"})
 
         return person
+
+    def update(self, instance, validated_data):
+        """Actualizar una instancia existente de Person."""
+        # Extraer los datos del contacto del validated_data
+        contact_fields = ['cellphone', 'email',
+                          'address', 'use', 'is_main']
+        contact_data = {}
+        contact_id = validated_data.pop('contact_id', None)
+
+        for field in contact_fields:
+            value = validated_data.pop(field, None)
+            if value == "":
+                contact_data[field] = None
+            else:
+                contact_data[field] = value
+
+        # Manejar campos vacíos de Person
+        if validated_data.get('civil_state') == "":
+            validated_data['civil_state'] = None
+        if validated_data.get('photo') == "":
+            validated_data['photo'] = None
+
+        with transaction.atomic():
+            # Actualizar los campos de Person
+            for attr, value in validated_data.items():
+                setattr(instance, attr, value)
+            instance.save()
+
+            # Actualizar el contacto específico si se proporciona un ID
+            if contact_id is not None:
+                try:
+                    contact = Contact.objects.get(id=contact_id, person=instance)
+                    for attr, value in contact_data.items():
+                        setattr(contact, attr, value)
+                    contact.save()
+                except Contact.DoesNotExist:
+                    raise serializers.ValidationError(
+                        {"contact_id": "El contacto especificado no existe para esta persona."}
+                    )
+            else:
+                # Si no se proporciona ID, actualizar o crear el contacto principal
+                contact, created = Contact.objects.update_or_create(
+                    person=instance,
+                    defaults=contact_data
+                )
+
+        return instance
