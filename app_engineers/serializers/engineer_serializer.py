@@ -11,14 +11,13 @@ class EngineerSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'is_active',
+            'colligiate_code',
             'person',
-            'specialty',
-            'registration_number',
+            # 'specialty',
             'registration_date',
-            'registration_expiry',
-            'professional_title',
-            'institution',
-            'country',
+            'member_type',
+            'vitalicio_date',
+            'departament_council',
         ]
         read_only_fields = ['id', 'is_active']
 
