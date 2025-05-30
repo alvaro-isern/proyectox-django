@@ -10,9 +10,9 @@ class Event(models.Model):
     start_date = models.DateField(verbose_name="Start Date")
     end_date = models.DateField(verbose_name="End Date")
     modality = models.CharField(max_length=50, verbose_name="Modality", null=True, blank=True, choices=[
-        (1, 'PRESENCIAL'),
-        (2, 'VIRTUAL'),
-        (3, 'HÍBRIDO'),
+        ("1", 'PRESENCIAL'),
+        ("2", 'VIRTUAL'),
+        ("3", 'HÍBRIDO'),
     ])
     fee = models.ForeignKey('Fee', on_delete=models.CASCADE, related_name='events', verbose_name="Fee")
 
@@ -35,8 +35,8 @@ class EventType(models.Model):
 class Entity(models.Model):
     name = models.CharField(max_length=100, verbose_name="Entity Name")
     entity_type = models.CharField(max_length=50, verbose_name="Entity Type", choices=[
-        (1, 'PÚBLICA'),
-        (2, 'PRIVADA'),
+        ("1", 'PÚBLICA'),
+        ("2", 'PRIVADA'),
     ])
     ruc = models.CharField(max_length=20, verbose_name="RUC", null=True, blank=True)
     person_representative = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='entities', verbose_name="Representative", null=True, blank=True)
@@ -55,10 +55,10 @@ class Room(models.Model):
     departament_council = models.ForeignKey(DepartmentalCouncil, on_delete=models.CASCADE, related_name='rooms', verbose_name="Departmental Council")
     name = models.CharField(max_length=50, verbose_name="Room Name")
     type = models.CharField(max_length=50, verbose_name="Room Type", choices=[
-        (1, 'AUDITORIO'),
-        (2, 'SALÓN DE CLASES'),
-        (3, 'OFICINA'),
-        (4, 'OTRO'),
+        ("1", 'AUDITORIO'),
+        ("2", 'SALÓN DE CLASES'),
+        ("3", 'OFICINA'),
+        ("4", 'OTRO'),
     ])
     capacity = models.IntegerField(verbose_name="Capacity")
     location = models.CharField(max_length=100, verbose_name="Location", null=True, blank=True)
@@ -66,9 +66,9 @@ class Room(models.Model):
     hour_rate = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Hour Fee")
     rental_available = models.BooleanField(default=True, verbose_name="Rental Available")
     status = models.CharField(max_length=20, verbose_name="Status", choices=[
-        (1, 'DISPONIBLE'),
-        (2, 'OCUPADO'),
-        (3, 'EN MANTENIMIENTO'),
+        ("1", 'DISPONIBLE'),
+        ("2", 'OCUPADO'),
+        ("3", 'EN MANTENIMIENTO'),
     ])
 
     class Meta:
@@ -84,9 +84,9 @@ class RoomReservation(models.Model):
     end_date = models.DateField(verbose_name="End Date")
     reason = models.CharField(max_length=100, verbose_name="Reason", null=True, blank=True)
     status = models.CharField(max_length=20, verbose_name="Status", choices=[
-        (1, 'RESERVADO'),
-        (2, 'CANCELADO'),
-        (3, 'FINALIZADO'),
+        ("1", 'RESERVADO'),
+        ("2", 'CANCELADO'),
+        ("3", 'FINALIZADO'),
     ])
 
 
@@ -97,8 +97,8 @@ class RoomReservation(models.Model):
 
 class Fee(models.Model):
     participant_type = models.CharField(max_length=50, verbose_name="Participant Type", choices=[
-        (1, 'EXTERNO'),
-        (2, 'INTERNO'),
+        ("1", 'EXTERNO'),
+        ("2", 'INTERNO'),
     ])
     amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Amount")
     start_date = models.DateField(verbose_name="Start Date")
@@ -121,8 +121,8 @@ class EventInscription(models.Model):
     payment_required = models.BooleanField(default=True, verbose_name="Payment Required")
     inscription_cost = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Inscription Cost", null=True, blank=True)
     partipant_type = models.CharField(max_length=50, verbose_name="Participant Type", choices=[
-        (1, 'EXTERNO'),
-        (2, 'INTERNO'),
+        ("1", 'EXTERNO'),
+        ("2", 'INTERNO'),
     ])
 
     class Meta:
@@ -134,9 +134,9 @@ class EventInscription(models.Model):
 class Participant(models.Model):
     person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='participants', verbose_name="Person")
     study_center_type = models.CharField(max_length=50, verbose_name="Study Center Type", choices=[
-        (1, 'UNIVERSIDAD'),
-        (2, 'INSTITUTO'),
-        (3, 'OTRO'),
+        ("1", 'UNIVERSIDAD'),
+        ("2", 'INSTITUTO'),
+        ("3", 'OTRO'),
     ])
     institution_name = models.CharField(max_length=50, null=True, blank=True)
     carreer = models.CharField(max_length=50, null=True, blank=True)
@@ -166,10 +166,10 @@ class EventCertificate(models.Model):
     code = models.CharField(max_length=50, verbose_name="Certificate Code")
     issue_date = models.DateField(verbose_name="Issue Date")
     certificate_type = models.CharField(max_length=50, verbose_name="Certificate Type", choices=[
-        (1, 'ASISTENCIA'),
-        (2, 'PARTICIPACIÓN'),
-        (3, 'EXPOSICIÓN'),
-        (4, 'OTROS'),
+        ("1", 'ASISTENCIA'),
+        ("2", 'PARTICIPACIÓN'),
+        ("3", 'EXPOSICIÓN'),
+        ("4", 'OTROS'),
     ])
     certificate_url = models.URLField(verbose_name="Certificate URL", null=True, blank=True)
     certificate_text = models.TextField(verbose_name="Certificate Text", null=True, blank=True)
@@ -219,12 +219,12 @@ class Speaker(models.Model):
     position = models.CharField(max_length=50, verbose_name="Position", null=True, blank=True)
     bio = models.TextField(verbose_name="Biography", null=True, blank=True)
     academic_level = models.CharField(max_length=50, verbose_name="Academic Level", choices=[
-        (1, 'BACHILLER'),
-        (2, 'TITULADO'),
-        (3, 'MAESTRÍA'),
-        (4, 'DOCTORADO'),
-        (5, 'POSTDOCTORADO'),
-        (6, 'OTRO'),
+        ("1", 'BACHILLER'),
+        ("2", 'TITULADO'),
+        ("3", 'MAESTRÍA'),
+        ("4", 'DOCTORADO'),
+        ("5", 'POSTDOCTORADO'),
+        ("6", 'OTRO'),
     ])
     professional_profile = models.TextField(verbose_name="Professional Profile", null=True, blank=True)
 
@@ -257,8 +257,8 @@ class Executive(models.Model):
     start_date = models.DateField(verbose_name="Start Date")
     end_date = models.DateField(verbose_name="End Date", null=True, blank=True)
     status = models.CharField(max_length=20, verbose_name="Status", choices=[
-        (1, 'ACTIVO'),
-        (2, 'INACTIVO'),
+        ("1", 'ACTIVO'),
+        ("2", 'INACTIVO'),
     ])
 
     class Meta:
@@ -270,13 +270,13 @@ class Position(models.Model):
     name = models.CharField(max_length=50, verbose_name="Position Name")
     description = models.TextField(verbose_name="Description", null=True, blank=True)
     level = models.CharField(max_length=50, verbose_name="Level", choices=[
-        (1, 'NACIONAL'),
-        (2, 'DEPARTAMENTAL'),
-        (3, 'LOCAL'),
+        ("1", 'NACIONAL'),
+        ("2", 'DEPARTAMENTAL'),
+        ("3", 'LOCAL'),
     ])
     type_organ = models.CharField(max_length=50, verbose_name="Organ Type", choices=[
-        (1, 'PÚBLICA'),
-        (2, 'PRIVADA'),
+        ("1", 'PÚBLICA'),
+        ("2", 'PRIVADA'),
     ])
 
     class Meta:
@@ -289,8 +289,8 @@ class Period(models.Model):
     start_date = models.DateField(verbose_name="Start Date")
     end_date = models.DateField(verbose_name="End Date")
     status = models.CharField(max_length=20, verbose_name="Status", choices=[
-        (1, 'ACTIVO'),
-        (2, 'INACTIVO'),
+        ("1", 'ACTIVO'),
+        ("2", 'INACTIVO'),
     ])
 
     class Meta:

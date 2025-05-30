@@ -15,8 +15,8 @@ class Engineer(models.Model):
     is_active = models.BooleanField(default=True)
     registration_date = models.DateField()
     member_type = models.CharField(max_length=20, choices=[
-        (1, 'ORDINARIO'),
-        (2, 'VITALICIO'),
+        ("1", 'ORDINARIO'),
+        ("2", 'VITALICIO'),
     ])
     vitalicio_date = models.DateField(null=True, blank=True)
     departament_council = models.ForeignKey('DepartmentalCouncil', on_delete=models.CASCADE, related_name='engineers')
@@ -62,22 +62,22 @@ class IngineerSpecialty(models.Model):
         db_table = 'engineers_specialties'
 
 class Person(models.Model):
-    document_type = models.IntegerField(max_length=50, choices=[
-        (1, 'DNI'),
-        (2, 'CARNET DE EXTRANJERIA'),
-        (3, 'PASAPORTE'),
-        (4, 'CEDULA DIPLOMATICA DE IDENTIDAD'),
+    document_type = models.CharField(max_length=50, choices=[
+        ("1", 'DNI'),
+        ("2", 'CARNET DE EXTRANJERIA'),
+        ("3", 'PASAPORTE'),
+        ("4", 'CEDULA DIPLOMATICA DE IDENTIDAD'),
     ])
     doc_number = models.CharField(max_length=20, unique=True)
     names = models.CharField(max_length=100)
     paternal_surname = models.CharField(max_length=100)
     maternal_surname = models.CharField(max_length=100)
     birth_date = models.DateField()
-    civil_state = models.IntegerField(max_length=20, null=True, blank=True, choices=[
-        (1, 'SOLTERO(A)'),
-        (2, 'CASADO(A)'),
-        (3, 'DIVORCIADO(A)'),
-        (4, 'VIUDO(A)'),
+    civil_state = models.CharField(max_length=20, null=True, blank=True, choices=[
+        ("1", 'SOLTERO(A)'),
+        ("2", 'CASADO(A)'),
+        ("3", 'DIVORCIADO(A)'),
+        ("4", 'VIUDO(A)'),
     ])
     photo = models.ImageField(upload_to='photos/', null=True, blank=True)
     country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='persons')
@@ -101,10 +101,10 @@ class Contact(models.Model):
     email = models.EmailField(max_length=100, null=True, blank=True)
     address = models.CharField(max_length=100, null=True, blank=True)
     is_main = models.BooleanField(default=False, null=True, blank=True)
-    use = models.IntegerField(max_length=20, null=True, blank=True, choices=[
-        (1, 'PERSONAL'),
-        (2, 'LABORAL'),
-        (3, 'EMERGENCIA'),
+    use = models.CharField(max_length=20, null=True, blank=True, choices=[
+        ("1", 'PERSONAL'),
+        ("2", 'LABORAL'),
+        ("3", 'EMERGENCIA'),
     ])
     is_active = models.BooleanField(default=True)
     objects = SoftDeleteManager()
@@ -123,13 +123,13 @@ class Contact(models.Model):
 class FamilyInformation(models.Model):
     person = models.ForeignKey('Person', on_delete=models.CASCADE, related_name='family_informations')
     person_family = models.ForeignKey('Person', on_delete=models.CASCADE, related_name='family_persons')
-    relationship = models.IntegerField(max_length=20, choices=[
-        (1, 'PADRE'),
-        (2, 'MADRE'),
-        (3, 'HERMANO(A)'),
-        (4, 'HIJO(A)'),
-        (5, 'CONYUGE'),
-        (6, 'OTRO'),
+    relationship = models.CharField(max_length=20, choices=[
+        ("1", 'PADRE'),
+        ("2", 'MADRE'),
+        ("3", 'HERMANO(A)'),
+        ("4", 'HIJO(A)'),
+        ("5", 'CONYUGE'),
+        ("6", 'OTRO'),
     ])
     is_dependent = models.BooleanField(default=False)
     is_emergency_contact = models.BooleanField(default=False)
@@ -152,19 +152,19 @@ class JobExperience(models.Model):
     country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='job_experiences', null=True, blank=True)
     sector = models.CharField(max_length=100, null=True, blank=True)
     is_current_job = models.BooleanField(default=False, null=True, blank=True)
-    job_situation = models.IntegerField(max_length=20, null=True, blank=True, choices=[
-        (1, 'INDEPENDIENTE'),
-        (2, 'EMPLEADO'),
-        (3, 'DESEMPLEADO'),
+    job_situation = models.CharField(max_length=20, null=True, blank=True, choices=[
+        ("1", 'INDEPENDIENTE'),
+        ("2", 'EMPLEADO'),
+        ("3", 'DESEMPLEADO'),
     ])
-    type_contract = models.IntegerField(max_length=20, null=True, blank=True, choices=[
-        (1, 'NOMBRADO'),
-        (2, 'CONTRATADO'),
-        (3, 'LOCADOR'),
-        (4, 'CAS'),
-        (5, 'PART-TIME'),
-        (6, 'CONTRATO TEMPORAL'),
-        (7, 'CONTRATO POR SERVICIO'),
+    type_contract = models.CharField(max_length=20, null=True, blank=True, choices=[
+        ("1", 'NOMBRADO'),
+        ("2", 'CONTRATADO'),
+        ("3", 'LOCADOR'),
+        ("4", 'CAS'),
+        ("5", 'PART-TIME'),
+        ("6", 'CONTRATO TEMPORAL'),
+        ("7", 'CONTRATO POR SERVICIO'),
     ])
 
 
