@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     'app_payments',
     'app_events',
     'app_faults_procedures',
+    'app_users',
+    'app_persons',
 ]
 
 MIDDLEWARE = [

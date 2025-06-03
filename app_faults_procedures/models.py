@@ -6,12 +6,12 @@ from app_events.models import Period
 class Sanction(models.Model):
     case = models.ForeignKey('Case', on_delete=models.CASCADE, related_name='sanctions', verbose_name="Case")
     sanction_type = models.CharField(max_length=50, verbose_name="Sanction Type", choices=[
-        ("1", 'FALTA ÉTICA'),
-        ("2", 'FALTA CONTRA LA INSTITUCION'),
-        ("3", 'FALTA CONTRA EL ESTUTO'),
-        ("4", 'FATA A LOS REGLAMENTOS'),
-        ("5", 'FALTA CONTRA RESOLUCIONES'),
-        ("6", 'OTRO'),
+        ('1', 'FALTA ÉTICA'),
+        ('2', 'FALTA CONTRA LA INSTITUCION'),
+        ('3', 'FALTA CONTRA EL ESTUTO'),
+        ('4', 'FATA A LOS REGLAMENTOS'),
+        ('5', 'FALTA CONTRA RESOLUCIONES'),
+        ('6', 'OTRO'),
     ])
     start_date = models.DateField(
         verbose_name="Start Date",
@@ -56,11 +56,11 @@ class Case(models.Model):
     engineer_involved = models.ForeignKey(Engineer, on_delete=models.CASCADE, related_name='cases', verbose_name="Engineer Involved")
     complainant = models.ForeignKey(Engineer, on_delete=models.CASCADE, related_name='complaints', verbose_name="Complainant")
     instance = models.CharField(max_length=50, verbose_name="Instance", choices=[
-        ("1", 'PRIMERA INSTANCIA'),
-        ("2", 'SEGUNDA INSTANCIA'),
-        ("3", 'TERCERA INSTANCIA'),
-        ("4", 'CUARTA INSTANCIA'),
-        ("5", 'QUINTA INSTANCIA'),
+        ('1', 'PRIMERA INSTANCIA'),
+        ('2', 'SEGUNDA INSTANCIA'),
+        ('3', 'TERCERA INSTANCIA'),
+        ('4', 'CUARTA INSTANCIA'),
+        ('5', 'QUINTA INSTANCIA'),
     ])
 
     class Meta:
@@ -80,8 +80,8 @@ class Court(models.Model):
         blank=True,
     )
     status = models.CharField(max_length=20, verbose_name="Status", choices=[
-        ("1", 'ACTIVO'),
-        ("2", 'INACTIVO'),
+        ('1', 'ACTIVO'),
+        ('2', 'INACTIVO'),
     ], default=1)
 
     class Meta:
@@ -93,9 +93,9 @@ class TribunalMember(models.Model):
     court = models.ForeignKey(Court, on_delete=models.CASCADE, related_name='tribunal_members', verbose_name="Court")
     engineer = models.ForeignKey(Engineer, on_delete=models.CASCADE, related_name='tribunal_members', verbose_name="Engineer")
     position = models.CharField(max_length=50, verbose_name="Position", choices=[
-        ("1", 'PRESIDENTE'),
-        ("2", 'SECRETARIO'),
-        ("3", 'VOCAL'),
+        ('1', 'PRESIDENTE'),
+        ('2', 'SECRETARIO'),
+        ('3', 'VOCAL'),
     ], null=True, blank=True)
     start_date = models.DateField(
         verbose_name="Start Date",

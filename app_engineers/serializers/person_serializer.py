@@ -7,7 +7,7 @@ from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from app_engineers.models import Person, Contact, Country
+from app_persons.models import Person, Contact, Country
 from .contact_serializer import ContactSerializer
 
 

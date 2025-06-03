@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from app_persons.models import Person, AcademicTraining, Country
 # from django.utils import timezone
 # Create your models here.
 
@@ -9,14 +10,13 @@ class SoftDeleteManager(models.Manager):
         return super().get_queryset().filter(is_active=True)
 
 class Engineer(models.Model):
-    person = models.ForeignKey(
-        'Person', on_delete=models.CASCADE, related_name='engineers')
+    person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='engineers')
     colligiate_code = models.CharField(max_length=20, unique=True)
     is_active = models.BooleanField(default=True)
     registration_date = models.DateField()
     member_type = models.CharField(max_length=20, choices=[
-        ("1", 'ORDINARIO'),
-        ("2", 'VITALICIO'),
+        ('1', 'ORDINARIO'),
+        ('2', 'VITALICIO'),
     ])
     vitalicio_date = models.DateField(null=True, blank=True)
     departament_council = models.ForeignKey('DepartmentalCouncil', on_delete=models.CASCADE, related_name='engineers')
@@ -31,7 +31,7 @@ class Engineer(models.Model):
         self.save()
 
     class Meta:
-        db_table = 'engineers'
+        db_table = 'engineers_departmental'
 
 class Specialty(models.Model):
     name = models.CharField(max_length=100, unique=True, null=True, blank=True)
@@ -41,185 +41,37 @@ class Specialty(models.Model):
     status = models.BooleanField(default=True)
 
     class Meta:
-        db_table = 'specialties'
+        db_table = 'specialties_departmental'
 
 class ChapterSpecialty(models.Model):
-    chapter = models.ForeignKey('Chapter', on_delete=models.CASCADE, related_name='chapter_specialties')
-    specialty = models.ForeignKey('Specialty', on_delete=models.CASCADE, related_name='chapter_specialties')
+    chapter = models.ForeignKey('Chapter', on_delete=models.CASCADE, related_name='chapter_specialty_departmental')
+    specialty = models.ForeignKey('Specialty', on_delete=models.CASCADE, related_name='chapter_specialty_departmental')
     incorporation_date = models.DateField(null=True, blank=True)
 
     class Meta:
-        db_table = 'chapters_specialties'
+        db_table = 'chapter_specialty_departmental'
 
-class IngineerSpecialty(models.Model):
-    engineer = models.ForeignKey('Engineer', on_delete=models.CASCADE, related_name='engineer_specialties')
-    specialty_charter = models.ForeignKey('ChapterSpecialty', on_delete=models.CASCADE, related_name='engineer_specialties')
+class EngineerSpecialty(models.Model):
+    engineer = models.ForeignKey('Engineer', on_delete=models.CASCADE, related_name='engineer_specialty_departmental')
+    specialty_charter = models.ForeignKey('ChapterSpecialty', on_delete=models.CASCADE, related_name='engineer_specialty_departmental')
     registration_date = models.DateField(null=True, blank=True)
     is_main = models.BooleanField(default=False, null=True, blank=True)
     certificate = models.FileField(upload_to='certificates/', null=True, blank=True)
 
     class Meta:
-        db_table = 'engineers_specialties'
-
-class Person(models.Model):
-    document_type = models.CharField(max_length=50, choices=[
-        ("1", 'DNI'),
-        ("2", 'CARNET DE EXTRANJERIA'),
-        ("3", 'PASAPORTE'),
-        ("4", 'CEDULA DIPLOMATICA DE IDENTIDAD'),
-    ])
-    doc_number = models.CharField(max_length=20, unique=True)
-    names = models.CharField(max_length=100)
-    paternal_surname = models.CharField(max_length=100)
-    maternal_surname = models.CharField(max_length=100)
-    birth_date = models.DateField()
-    civil_state = models.CharField(max_length=20, null=True, blank=True, choices=[
-        ("1", 'SOLTERO(A)'),
-        ("2", 'CASADO(A)'),
-        ("3", 'DIVORCIADO(A)'),
-        ("4", 'VIUDO(A)'),
-    ])
-    photo = models.ImageField(upload_to='photos/', null=True, blank=True)
-    country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='persons')
-    is_active = models.BooleanField(default=True)
-    objects = SoftDeleteManager()
-
-    def delete(self):
-        self.is_active = False
-        self.save()
-
-    def restore(self):
-        self.is_active = True
-        self.save()
-
-    class Meta:
-        db_table = 'persons'
-
-class Contact(models.Model):
-    person = models.ForeignKey('Person', on_delete=models.CASCADE, related_name='contacts')
-    cellphone = models.CharField(max_length=20, null=True, blank=True, unique=True)
-    email = models.EmailField(max_length=100, null=True, blank=True)
-    address = models.CharField(max_length=100, null=True, blank=True)
-    is_main = models.BooleanField(default=False, null=True, blank=True)
-    use = models.CharField(max_length=20, null=True, blank=True, choices=[
-        ("1", 'PERSONAL'),
-        ("2", 'LABORAL'),
-        ("3", 'EMERGENCIA'),
-    ])
-    is_active = models.BooleanField(default=True)
-    objects = SoftDeleteManager()
-
-    def delete(self):
-        self.is_active = False
-        self.save()
-
-    def restore(self):
-        self.is_active = True
-        self.save()
-
-    class Meta:
-        db_table = 'contacts'
-
-class FamilyInformation(models.Model):
-    person = models.ForeignKey('Person', on_delete=models.CASCADE, related_name='family_informations')
-    person_family = models.ForeignKey('Person', on_delete=models.CASCADE, related_name='family_persons')
-    relationship = models.CharField(max_length=20, choices=[
-        ("1", 'PADRE'),
-        ("2", 'MADRE'),
-        ("3", 'HERMANO(A)'),
-        ("4", 'HIJO(A)'),
-        ("5", 'CONYUGE'),
-        ("6", 'OTRO'),
-    ])
-    is_dependent = models.BooleanField(default=False)
-    is_emergency_contact = models.BooleanField(default=False)
-    is_live = models.BooleanField(default=True)
-    death_date = models.DateField(null=True, blank=True)
-
-    cellphone = models.CharField(max_length=20)
-
-    class Meta:
-        db_table = 'family_informations'
-
-class JobExperience(models.Model):
-    person = models.ForeignKey('Person', on_delete=models.CASCADE, related_name='job_experiences')
-    company_name = models.CharField(max_length=100)
-    position = models.CharField(max_length=100)
-    description = models.TextField(null=True, blank=True)
-    start_date = models.DateField()
-    end_date = models.DateField(null=True, blank=True)
-    references = models.TextField(null=True, blank=True)
-    country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='job_experiences', null=True, blank=True)
-    sector = models.CharField(max_length=100, null=True, blank=True)
-    is_current_job = models.BooleanField(default=False, null=True, blank=True)
-    job_situation = models.CharField(max_length=20, null=True, blank=True, choices=[
-        ("1", 'INDEPENDIENTE'),
-        ("2", 'EMPLEADO'),
-        ("3", 'DESEMPLEADO'),
-    ])
-    type_contract = models.CharField(max_length=20, null=True, blank=True, choices=[
-        ("1", 'NOMBRADO'),
-        ("2", 'CONTRATADO'),
-        ("3", 'LOCADOR'),
-        ("4", 'CAS'),
-        ("5", 'PART-TIME'),
-        ("6", 'CONTRATO TEMPORAL'),
-        ("7", 'CONTRATO POR SERVICIO'),
-    ])
-
-
-    class Meta:
-        db_table = 'job_experiences'
-
-class AcademicTraining(models.Model):
-    person = models.ForeignKey('Person', on_delete=models.CASCADE, related_name='trainings')
-    training_type = models.ForeignKey('TrainingType', on_delete=models.CASCADE, related_name='trainings')
-    institution = models.CharField(max_length=100)
-    obtained_degree = models.CharField(max_length=100)
-    institution = models.CharField(max_length=100)
-    start_date = models.DateField()
-    end_date = models.DateField()
-    country = models.ForeignKey(
-        'Country', on_delete=models.CASCADE, related_name='trainings')
-    is_profetional_dregree = models.BooleanField(default=False)
-
-    class Meta:
-        db_table = 'trainings'
-
-class TrainingType(models.Model):
-    name = models.CharField(max_length=50, unique=True, null=True, blank=True)
-    description = models.TextField(null=True, blank=True)
-
-    class Meta:
-        db_table = 'training_types'
+        db_table = 'engineer_specialty_departmental'
 
 class EngineerTraining(models.Model):
-    engineer = models.ForeignKey('Engineer', on_delete=models.CASCADE, related_name='engineer_trainings')
-    training = models.ForeignKey('AcademicTraining', on_delete=models.CASCADE, related_name='engineer_trainings')
+    engineer = models.ForeignKey('Engineer', on_delete=models.CASCADE, related_name='engineer_training_departmental')
+    training = models.ForeignKey(AcademicTraining, on_delete=models.CASCADE, related_name='engineer_training_departmental')
     is_main = models.BooleanField(default=False, null=True, blank=True)
 
     class Meta:
-        db_table = 'engineer_trainings'
-
-class Country(models.Model):
-    country_cod = models.CharField(max_length=10, unique=True)
-    iso_code = models.CharField(max_length=10, unique=True)
-    name = models.CharField(max_length=100, unique=True)
-    demonym = models.CharField(max_length=100, unique=True)
-
-    class Meta:
-        db_table = 'countries'
-
-class Multinationality(models.Model):
-    person = models.ForeignKey('Person', on_delete=models.CASCADE, related_name='multinationalities')
-    country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='multinationalities')
-
-    class Meta:
-        db_table = 'multinationalities'
+        db_table = 'engineer_training_departmental'
 
 class Province(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='provinces')
+    country = models.ForeignKey(Country, on_delete=models.CASCADE, related_name='provinces')
 
     class Meta:
         db_table = 'provinces'
@@ -240,7 +92,7 @@ class Chapter(models.Model):
     status = models.BooleanField(default=True)
 
     class Meta:
-        db_table = 'chapters'
+        db_table = 'chapters_departmental'
 
 class DepartmentalCouncil(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -266,7 +118,7 @@ class DepartmentalCouncilPhone(models.Model):
 
 class LocalCommittee(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    departamental_council = models.ForeignKey('DepartmentalCouncil', on_delete=models.CASCADE, related_name='local_committees')
+    departamental_council = models.ForeignKey('DepartmentalCouncil', on_delete=models.CASCADE, related_name='local_committees_departmental')
     address = models.CharField(max_length=100, null=True, blank=True)
     telephone1 = models.CharField(max_length=20, null=True, blank=True)
     telephone2 = models.CharField(max_length=20, null=True, blank=True)
@@ -275,18 +127,18 @@ class LocalCommittee(models.Model):
     status = models.BooleanField(default=True)
 
     class Meta:
-        db_table = 'local_committees'
+        db_table = 'local_committees_departmental'
 
 class InstitutionalArea(models.Model):
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(null=True, blank=True)
 
     class Meta:
-        db_table = 'institutional_areas'
+        db_table = 'institutional_areas_departmental'
 
 class DecentralizedHeadquarters(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    departamental_council = models.ForeignKey('DepartmentalCouncil', on_delete=models.CASCADE, related_name='decentralized_headquarters')
+    departamental_council = models.ForeignKey('DepartmentalCouncil', on_delete=models.CASCADE, related_name='decentralized_headquarters_departmental')
     address = models.CharField(max_length=100, null=True, blank=True)
     telephone1 = models.CharField(max_length=20, null=True, blank=True)
     telephone2 = models.CharField(max_length=20, null=True, blank=True)
@@ -295,7 +147,7 @@ class DecentralizedHeadquarters(models.Model):
     status = models.BooleanField(default=True)
 
     class Meta:
-        db_table = 'decentralized_headquarters'
+        db_table = 'decentralized_headquarters_departmental'
 
 # class DocumentType(models.Model):
 #     type = models.CharField(max_length=50, unique=True)

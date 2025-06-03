@@ -18,10 +18,10 @@ class PaymentFee(models.Model):
         max_length=20,
         verbose_name="Quota Status",
         choices=[
-            ("1", 'PAGADO'),
-            ("2", 'VENCIDO'),
-            ("3", 'PENDIENTE'),
-            ("4", 'CANCELADO'),
+            ('1', 'PAGADO'),
+            ('2', 'VENCIDO'),
+            ('3', 'PENDIENTE'),
+            ('4', 'CANCELADO'),
         ],
         default=3,
     )
@@ -51,17 +51,17 @@ class Payment(models.Model):
     )
     payment_method = models.CharField(
         max_length= 50, choices=[
-            ("1", 'EFECTIVO'),
-            ("2", 'TARJETA DE CREDITO/DEBITO'),
-            ("3", 'YAPE/PLIN')
+            ('1', 'EFECTIVO'),
+            ('2', 'TARJETA DE CREDITO/DEBITO'),
+            ('3', 'YAPE/PLIN')
         ]
     )
     operation_number = models.CharField(max_length=50, verbose_name="Operation Number", null=True, blank=True)
     status = models.CharField(max_length=20, verbose_name="Status", choices=[
-        ("1", 'PAGADO'),
-        ("2", 'VENCIDO'),
-        ("3", 'PENDIENTE'),
-        ("4", 'CANCELADO'),
+        ('1', 'PAGADO'),
+        ('2', 'VENCIDO'),
+        ('3', 'PENDIENTE'),
+        ('4', 'CANCELADO'),
     ], default=3)
     departament_council = models.ForeignKey(
         DepartmentalCouncil,

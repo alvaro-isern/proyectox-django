@@ -1,6 +1,7 @@
 from rest_framework import viewsets, permissions
 from rest_framework import viewsets
-from app_engineers.models import Person, Contact, Engineer
+from app_persons.models import Person, Contact
+from app_engineers.models import Engineer
 from app_engineers.serializers.person_serializer import PersonSerializer
 from app_engineers.serializers.contact_serializer import ContactSerializer
 from app_engineers.serializers.engineer_serializer import EngineerSerializer

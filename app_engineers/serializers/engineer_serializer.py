@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from app_engineers.models import Engineer, Person
+from app_engineers.models import Engineer
+from app_persons.models import Person
 from .person_serializer import PersonSerializer
 
 class EngineerSerializer(serializers.ModelSerializer):
