@@ -15,7 +15,7 @@ class Person(models.Model):
     names = models.CharField(max_length=100)
     paternal_surname = models.CharField(max_length=100)
     maternal_surname = models.CharField(max_length=100)
-    birth_date = models.DateField()
+    birth_date = models.DateField(null=True, blank=True)
     civil_state = models.CharField(max_length=20, null=True, blank=True, choices=[
         ('1', 'SOLTERO(A)'),
         ('2', 'CASADO(A)'),
@@ -40,7 +40,7 @@ class Person(models.Model):
 
 class Contact(models.Model):
     person = models.ForeignKey('Person', on_delete=models.CASCADE, related_name='contacts_person')
-    cellphone = models.CharField(max_length=20, null=True, blank=True, unique=True)
+    cellphone = models.CharField(max_length=20, null=True, blank=True)
     email = models.EmailField(max_length=100, null=True, blank=True)
     address = models.CharField(max_length=100, null=True, blank=True)
     is_main = models.BooleanField(default=False, null=True, blank=True)

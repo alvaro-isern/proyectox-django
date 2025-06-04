@@ -30,7 +30,7 @@ class PaymentFee(models.Model):
     )
 
     class Meta:
-        db_table = 'payment_fees'
+        db_table = 'fees_payment'
         verbose_name = "Payment Fee"
         verbose_name_plural = "Payment Fees"
 
@@ -38,7 +38,7 @@ class Payment(models.Model):
     payment_concept = models.ForeignKey(
         'PaymentConcept',
         on_delete=models.CASCADE,
-        related_name='%(class)s_payments',
+        related_name='%(class)s_paymentconcept',
         verbose_name="Payment Concept",
     )
     payment_date = models.DateField(
@@ -63,10 +63,10 @@ class Payment(models.Model):
         ('3', 'PENDIENTE'),
         ('4', 'CANCELADO'),
     ], default=3)
-    departament_council = models.ForeignKey(
+    departmental_council = models.ForeignKey(
         DepartmentalCouncil,
         on_delete=models.CASCADE,
-        related_name='%(class)s_payments',
+        related_name='%(class)s_departmentalcouncil',
         verbose_name="Departmental Council",
     )
 
@@ -82,7 +82,7 @@ class PaymentConcept(models.Model):
     description = models.TextField(verbose_name="Description", null=True, blank=True)
 
     class Meta:
-        db_table = 'payment_concepts'
+        db_table = 'concepts_payment'
         verbose_name = "Payment Concept"
         verbose_name_plural = "Payment Concepts"
 
@@ -90,12 +90,12 @@ class EventPayment(Payment):
     event_inscription = models.ForeignKey(
         EventInscription,
         on_delete=models.CASCADE,
-        related_name='payments',
+        related_name='eventpayment_eventinscription',
         verbose_name="Event Inscription",
     )
 
     class Meta:
-        db_table = 'event_payments'
+        db_table = 'events_payment'
         verbose_name = "Event Payment"
         verbose_name_plural = "Event Payments"
 
@@ -103,12 +103,12 @@ class SanctionPayment(Payment):
     sanction = models.ForeignKey(
         Sanction,
         on_delete=models.CASCADE,
-        related_name='payments',
+        related_name='sanctionpayment_sanction',
         verbose_name="Sanction",
     )
 
     class Meta:
-        db_table = 'sanction_payments'
+        db_table = 'sanctions_payment'
         verbose_name = "Sanction Payment"
         verbose_name_plural = "Sanction Payments"
 
@@ -116,18 +116,18 @@ class QuotaPayment(Payment):
     engineer = models.ForeignKey(
         Engineer,
         on_delete=models.CASCADE,
-        related_name='payments',
+        related_name='quotapayment_engineer',
         verbose_name="Engineer",
     )
     payment_fee = models.ForeignKey(
         "PaymentFee",
         on_delete=models.CASCADE,
-        related_name='payments',
+        related_name='quotapayment_fee',
         verbose_name="Payment Fee",
     )
 
     class Meta:
-        db_table = 'quota_payments'
+        db_table = 'quotas_payment'
         verbose_name = "Quota Payment"
         verbose_name_plural = "Quota Payments"
 
@@ -145,8 +145,8 @@ class QuotaPayment(Payment):
 #     class Meta:
 #         db_table = 'quota_status'
 #         verbose_name = "Quota Status"
-
-
+#
+#
 # class PaymentMethod(models.Model):
 #     name = models.CharField(
 #         max_length=50,

@@ -99,10 +99,8 @@ class DepartmentalCouncil(models.Model):
     headquarters = models.CharField(max_length=100, unique=True)
     province = models.ForeignKey('Province', on_delete=models.CASCADE, related_name='departmental_councils')
     institutional_area = models.ForeignKey('InstitutionalArea', on_delete=models.CASCADE, related_name='departmental_councils')
-    address = models.CharField(max_length=100)
+    address = models.CharField(max_length=100, null=True, blank=True)
     email = models.EmailField(max_length=100, unique=True, null=True, blank=True)
-    zona = models.CharField(max_length=100, unique=True)
-    creation_date = models.DateField()
     status = models.BooleanField(default=True)
 
     class Meta:
