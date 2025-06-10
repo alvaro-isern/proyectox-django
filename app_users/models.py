@@ -54,7 +54,7 @@ class Module(models.Model):
         db_table = 'modules_user'
 
 class SectionMenu(models.Model):
-    module = models.ForeignKey('Module', on_delete=models.CASCADE, related_name='section_menu_module')
+    module = models.ForeignKey('Module', on_delete=models.CASCADE, related_name='sectionmenu_module')
     name = models.CharField(max_length=255)
 
     def __str__(self):
@@ -92,8 +92,8 @@ class SubMenu(models.Model):
         db_table = 'submenu_user'
 
 class UserRole(models.Model):
-    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='user_role_user')
-    module = models.ForeignKey('Module', on_delete=models.CASCADE, related_name='user_role_module')
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='userrole_user')
+    module = models.ForeignKey('Module', on_delete=models.CASCADE, related_name='userrole_module')
     is_admin = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 
@@ -105,9 +105,9 @@ class UserRole(models.Model):
         unique_together = ('user', 'module')
 
 class UserAccess(models.Model):
-    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='user_access_user')
-    menu = models.ForeignKey('Menu', on_delete=models.CASCADE, related_name='user_access_menu')
-    sub_menu = models.ForeignKey('SubMenu', on_delete=models.CASCADE, related_name='user_access_submenu', null=True,
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='useraccess_user')
+    menu = models.ForeignKey('Menu', on_delete=models.CASCADE, related_name='useraccess_menu')
+    sub_menu = models.ForeignKey('SubMenu', on_delete=models.CASCADE, related_name='useraccess_submenu', null=True,
                                  blank=True)
     is_active = models.BooleanField(default=True)
 
@@ -139,7 +139,7 @@ class AccessCode(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
-    action = models.ForeignKey('ActionCode',on_delete=models.CASCADE, related_name='access_code_accion', null=True, blank=True)
+    action = models.ForeignKey('ActionCode',on_delete=models.CASCADE, related_name='accesscode_accion', null=True, blank=True)
 
     def is_valid(self):
         return now() < self.expires_at

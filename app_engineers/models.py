@@ -13,7 +13,7 @@ class Engineer(models.Model):
     person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='engineers')
     colligiate_code = models.CharField(max_length=20, unique=True)
     is_active = models.BooleanField(default=True)
-    registration_date = models.DateField()
+    registration_date = models.DateField(null=True, blank=True)
     member_type = models.CharField(max_length=20, choices=[
         ('1', 'ORDINARIO'),
         ('2', 'VITALICIO'),
@@ -38,7 +38,7 @@ class Specialty(models.Model):
     description = models.TextField(null=True, blank=True)
     code = models.CharField(max_length=20, null=True, blank=True, unique=True)
     creation_date = models.DateField(null=True, blank=True)
-    status = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         db_table = 'specialties_departmental'
@@ -99,6 +99,7 @@ class DepartmentalCouncil(models.Model):
     headquarters = models.CharField(max_length=100, unique=True)
     province = models.ForeignKey('Province', on_delete=models.CASCADE, related_name='departmental_councils')
     institutional_area = models.ForeignKey('InstitutionalArea', on_delete=models.CASCADE, related_name='departmental_councils')
+    creation_date = models.DateField(null=True, blank=True)
     address = models.CharField(max_length=100, null=True, blank=True)
     email = models.EmailField(max_length=100, unique=True, null=True, blank=True)
     status = models.BooleanField(default=True)
