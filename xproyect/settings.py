@@ -17,12 +17,23 @@ from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+env = os.environ.Env(DEBUG=(bool, False))
+
+os.environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-9d6ncm#25767n90$6#vqcytqlwcpfbaz7o4!+lk5qy(&n_gz#p'
+
+# Database
+DB_ENGINE = env("DB_ENGINE")
+DB_NAME = env("DB_NAME")
+DB_USER = env("DB_USER")
+DB_PASSWORD = env("DB_PASSWORD")
+DB_HOST = env("DB_HOST")
+DB_PORT = env("DB_PORT")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -98,12 +109,12 @@ WSGI_APPLICATION = 'xproyect.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': 5432,
+        "ENGINE": DB_ENGINE,
+        "NAME": DB_NAME,
+        "USER": DB_USER,
+        "PASSWORD": DB_PASSWORD,
+        "HOST": DB_HOST,
+        "PORT": DB_PORT
     }
 }
 
