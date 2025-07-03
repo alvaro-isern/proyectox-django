@@ -15,6 +15,7 @@ class Event(models.Model):
         ('2', 'VIRTUAL'),
         ('3', 'HÍBRIDO'),
     ])
+    entity = models.ForeignKey('Entity', on_delete=models.CASCADE, related_name='event_entity', verbose_name="Entity", null=True, blank=True)
     fee = models.ForeignKey('Fee', on_delete=models.CASCADE, related_name='event_fee', verbose_name="Fee")
 
     class Meta:
@@ -41,6 +42,7 @@ class Entity(models.Model):
     ])
     ruc = models.CharField(max_length=20, verbose_name="RUC", null=True, blank=True)
     person_representative = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='entity_personrepresentative', verbose_name="Representative", null=True, blank=True)
+    executive = models.ForeignKey('Executive', on_delete=models.CASCADE, related_name='entity_executive', verbose_name="Executive", null=True, blank=True)
     address = models.CharField(max_length=200, verbose_name="Address", null=True, blank=True)
     phone = models.CharField(max_length=20, verbose_name="Phone", null=True, blank=True)
     email = models.EmailField(verbose_name="Email", null=True, blank=True)
